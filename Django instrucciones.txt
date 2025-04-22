@@ -1,0 +1,160 @@
+Primero tener instalado:
+	Python versión >= 3...
+	Pip
+	Node
+	Npm
+	Postman
+	Workbench
+	XAMPP
+
+Para iniciar lo correcto sería empezar con un entorno virtual para ello
+	Creo una carpeta donde quiero empezar el proyecto, en mi caso en htdocs
+	Instalo virtalenv con: *pip3 install virtualenv*
+	Veo con *pip3 list* las librerías instaladas en mi entorno local, son muchas
+	creo mi entorno virtual con: *python -m venv env*
+	Lo activo, preferiblemente desde la cmd y no una terminal de VSC con: *C:\xampp\htdocs\fullstack_django_vue\env\Scripts\activate*
+	Luego acceder a la carpeta creada donde está el entorno virtual **cd C:\xampp\htdocs\fullstack_django_vue
+	Ya estando en el entorno al darle un *pip list* no veré dependencias instaladas
+
+Empezar un proyecto con Django
+	Primero estar en el entorno virtual: *C:\xampp\htdocs\fullstack_django_vue\env\Scripts\activate*
+	Luego acceder a la carpeta creada donde está el entorno virtual **cd C:\xampp\htdocs\fullstack_django_vue
+	Instalar Django: *pip install Django*
+	Crear el proyecto: *django-admin startproject backend*
+
+Algunas cosas a cambiar en el settings.py:	
+	LANGUAGE_CODE = 'es-es'
+	TIME_ZONE = 'America/El_Salvador'
+	USE_L10N = True
+
+Correr el servidor:
+	(env) C:\xampp\htdocs\fullstack_django_vue\backend>python manage.py runserver
+	Si pongo mi ip dada por el router en ALLOWED_HOSTS = ['192.168.1.8'] puedo añadirle al final del prompt anterior: *python manage.py runserver 192.168.1.6:8000*
+	
+Crear una aplicación:
+	*(env) C:\xampp\htdocs\fullstack_django_vue\backend>django-admin startapp home*
+
+Iniciar API REST:
+	(env) C:\xampp\htdocs\fullstack_django_vue\backend>pip install djangorestframework
+	Poner en el settings.py: INSTALLED_APPS = ['rest_framework',]
+
+Para poder subir documentos e imágenes, que suban documentos los usuarios
+	En el settings.py importar os
+	Modificar el STATIC_URL...
+
+Instalar MySQL:
+	Dentro del entorno virtual: *pip install mysqlclient*
+	Configurar el settings.py:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME':'django_2', #BD
+        'USER':'root',
+        'PASSWORD':'123123',
+        'HOST':'localhost',
+        'PORT':'3306',
+        'OPTIONS': {
+            'autocommit': True
+        }
+    }
+}
+
+
+Hacer un tipo de documento de descarga de librerías:
+	Primero crear un txt. Adentro del entorno darle *pip freeze* y pegar eso en el txt, para cuando se está en otro proyecto poderle dar: *pip install -r requirements.txt*
+
+Hacer un .env:
+	*pip install Python-dotenv*
+	crear en la raíz del proyecto(backend): .env .env.example .gitignore
+
+MODELOS:
+	Para que funcione primero es necesario registrarlo en el settings.py:
+	INSTALLED_APPS = [
+    		'categorias'
+	]
+
+SLUGs:
+	Son los que van al final de una url para que se vea más limpia
+	*pip install django-autoslug*
+	
+Crear tablas con migraciones:
+	1 ejecutar el comando: *python manage.py migrate*
+	2 *python manage.py makemigrations*
+	3 *Python manage.py migrate*
+
+GET Categorías:
+	Tenes que serializar los registros traídos, crear un nuevo archivo dentro de la app llamado *serializers.py* y dentro de él poner lo que usaste tú.
+
+Crear un superusuario:
+	ingresar el comando: *python manage.py createsuperuser*
+	yo@ariel.com, Sovietico45
+
+Para usar los JWT:
+	*pip install python-jose*
+	también para consumirlo es necesario crear un archivo nuevo en la raíz de la app, decorators.py
+
+CORS:
+	Permite el uso de los datos de los servidores con el cliente
+	*pip install django-cors-headers*
+	Hacer las modificaciones en el settings.py, primero en apps instaladas con *corsheaders*, poner en el middleware *corsheaders.middleware.CorsMiddleware*, después en la nada poner:
+	CORS_ORIGIN_ALLOW_ALL=True
+	CORS_ALLOW_CREDENTIALS=True
+	CORS_ORIGIN_WHITELIST=[
+	    'http://192.168.1.8:5173',
+	]
+	CORS_ORIGIN_REGEX_WHITELIST=[
+	    'http://192.168.1.8:5173',
+	]
+
+Documentar API REST:
+	*pip install drf-yasg*
+	Cargarlo antes del rest_framework: drf_yasg
+	Terminar configuración en urls.py de backend
+
+
+
+
+
+		CREAR PROYECTO VUE
+	
+Inicio
+	Primero entrar a la carpeta donde está en evn y el backend
+	introducir el comando: *npm create vue@latest*
+	darle: y, router, pinia, ESLint, no
+	npm run dev -- --host
+
+	Borraste algunas cosas, ver imagen en Whatsapp, añadiste cosas en el index.html y creaste una nueva view en la carpeta views llamada Home.vue
+
+Librerias para hacer la lista:
+	*npm i vee-validate --save* y *npm i @vee-validate/yup*
+
+- Composables son para traer datos
+- Cuando pasas variables por la url del tipo ...?categoria_id=4,necesitas usar import { useRoute } from "vue-router"
+- Si queres usar un dropdownlist (select) usar las librerías de arriba
+
+Para empezar a crear una view primero la creas y luego la listas en RouteIndex luego añadir ruta en el header
+
+- Para crear validaciones lo recomendable es hacer Schemas, para nuestro proyecto que es grande debemos hacer muchos archivos, en mi caso haré solo uno, luego importarlo y aplicarles los sms de error
+
+CREAR REGISTRO DESDE FRONTEND
+	DESCARGAR AXIOS: *npm install axios*
+
+USO DE PINIA:
+	Crear carpeta en src llamada stores >authStores.js, esto es para asignar los valores del retorno de sesión a los sesionStorage, en el loginComposable lo mandas a llamar
+
+DARLE SEGURIDAD A LAS RUTAS:
+	Para este caso fue la de /panel
+	Recorrés la ruta con beforEach
+
+conexiones al servidor:
+	- Servicios
+	- Composables
+	- FetchAPI
+	- Axios
+
+Fancybox
+	Para que las imágenes abran chidas
+	*npm install @fancyapps/ui@4.0.31* || npm install @fancyapps/ui
+
+	
+
