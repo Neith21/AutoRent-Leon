@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'simple_history',
     'user_control',
     'error_log',
+    'user_helper',
 ]
 
 MIDDLEWARE = [

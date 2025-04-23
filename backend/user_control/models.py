@@ -7,6 +7,7 @@ from simple_history.models import HistoricalRecords
 class UsersMetadata(models.Model):
     user = models.ForeignKey(User, models.DO_NOTHING)
     token = models.CharField(max_length=100, blank=True, null=True)
+    user_image = models.CharField(max_length=100, null=True)
     history = HistoricalRecords()
 
 

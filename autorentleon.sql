@@ -8,6 +8,15 @@ SELECT * FROM users_metadata;
 select * from user_control_historicalusersmetadata;
 select * from error_log_errorlog;
 
+SET SQL_SAFE_UPDATES = 0;
+UPDATE users_metadata
+SET user_image = 'hola.png'
+WHERE user_image IS NULL OR user_image = '';
+SET SQL_SAFE_UPDATES = 1;
+
+
+
+
 
 -- --------------------------------------------------------------------------------------------------------------------
 -- BASE DE DATOS DE REFERENCIA PARA EL SISTEMA
