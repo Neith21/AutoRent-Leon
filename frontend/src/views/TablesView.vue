@@ -13,17 +13,7 @@ import CardBoxComponentEmpty from '@/components/CardBoxComponentEmpty.vue'
 <template>
   <LayoutAuthenticated>
     <SectionMain>
-      <SectionTitleLineWithButton :icon="mdiTableBorder" title="Tables" main>
-        <BaseButton
-          href="https://github.com/justboil/admin-one-vue-tailwind"
-          target="_blank"
-          :icon="mdiGithub"
-          label="Star on GitHub"
-          color="contrast"
-          rounded-full
-          small
-        />
-      </SectionTitleLineWithButton>
+      <SectionTitleLineWithButton :icon="mdiTableBorder" title="Tables" main />
       <NotificationBar color="info" :icon="mdiMonitorCellphone">
         <b>Responsive table.</b> Collapses on mobile
       </NotificationBar>
@@ -32,15 +22,9 @@ import CardBoxComponentEmpty from '@/components/CardBoxComponentEmpty.vue'
         <TableSampleClients checkable />
       </CardBox>
 
-      <SectionTitleLineWithButton :icon="mdiTableOff" title="Empty variation" />
-
-      <NotificationBar color="danger" :icon="mdiTableOff">
+      <!--<NotificationBar color="danger" :icon="mdiTableOff">
         <b>Empty table.</b> When there's nothing to show
-      </NotificationBar>
-
-      <CardBox>
-        <CardBoxComponentEmpty />
-      </CardBox>
+      </NotificationBar>-->
     </SectionMain>
   </LayoutAuthenticated>
 </template>

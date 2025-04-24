@@ -18,24 +18,30 @@ from utilities.decorators import is_authenticated
 from user_helper.serializers import *
 from user_control.models import *
 from error_log.utils import log_error
+from utilities.decorators import is_authenticated
 
 # Create your views here.
 
 
-class UserRC(APIView):
+class UserR(APIView):
     
-
+    @is_authenticated()
     def get(self, request):
-        data = UsersMetadata.objects.order_by('-id').all() #con el all trae registros en un corchete
+        # Solo metadata de usuarios cuyo User.is_active == True
+        data = UsersMetadata.objects.filter(
+            user__is_active=True
+        ).order_by('id')
         datos_json = UserHelperSerializer(data, many=True)
         return JsonResponse({
             "data": datos_json.data
         }, status=HTTPStatus.OK)
 
 
-class UserRUD(APIView):
+
+class UserRU(APIView):
     
     #Este metodo no es para devolver un registro en base a su id, sino en base a un id foraneo contenido en ella, es distinta al tradicional
+    @is_authenticated()
     def get(self, request, id):
         try:
             user = User.objects.filter(pk=id).get()
@@ -50,9 +56,10 @@ class UserRUD(APIView):
             return JsonResponse({
                 "status": "error",
                 "message": "Resource not found"
-            }, status=HTTPStatus.NOT_FOUND)   
+            }, status=HTTPStatus.NOT_FOUND)
 
 
+    @is_authenticated()
     def put(self, request, id):
         try:
             user = User.objects.get(pk=id)
@@ -90,36 +97,11 @@ class UserRUD(APIView):
                 "status": "error",
                 "message": "Unexpected error occurred"
             }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
-        
-
-    def delete(self, request, id):
-        try:
-            user = User.objects.get(pk=id)
-        except User.DoesNotExist:
-            return JsonResponse({
-                "status": "error",
-                "message": "User not found"
-            }, status=HTTPStatus.NOT_FOUND)
-
-        try:
-            user.is_active = False
-            user.save()
-
-            return JsonResponse({
-                "status": "ok",
-                "message": "User successfully deactivated"
-            }, status=HTTPStatus.OK)
-
-        except Exception as e:
-            return JsonResponse({
-                "status": "error",
-                "message": "Unexpected error occurred"
-            }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
     
 
 class EditImage(APIView):
     
-
+    @is_authenticated()
     def post(self, request):
         # Validate required fields
         required_fields = ["id"]
@@ -176,6 +158,35 @@ class EditImage(APIView):
                 "status": "error",
                 "message": "user_image must be PNG or JPEG"
             }, status=HTTPStatus.BAD_REQUEST)
+        
+
+class UserD(APIView):
+
+
+    @is_authenticated()
+    def put(self, request, id):
+        try:
+            user = User.objects.get(pk=id)
+        except User.DoesNotExist:
+            return JsonResponse({
+                "status": "error",
+                "message": "User not found"
+            }, status=HTTPStatus.NOT_FOUND)
+
+        try:
+            User.objects.filter(pk=id).update(is_active=0)
+
+            return JsonResponse({
+                "status": "ok",
+                "message": "User successfully deactivated"
+            }, status=HTTPStatus.OK)
+
+        except Exception as e:
+            return JsonResponse({
+                "status": "error",
+                "message": "Unexpected error occurred"
+            }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+
 
 
 def validate_required_fields(data, fields):

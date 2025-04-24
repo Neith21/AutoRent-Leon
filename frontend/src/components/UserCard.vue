@@ -7,6 +7,7 @@ import UserAvatarCurrentUser from '@/components/UserAvatarCurrentUser.vue'
 import CardBox from '@/components/CardBox.vue'
 import FormCheckRadio from '@/components/FormCheckRadio.vue'
 import PillTag from '@/components/PillTag.vue'
+import { jwtDecode } from "jwt-decode";
 
 const mainStore = useMainStore()
 
@@ -18,7 +19,18 @@ const userSwitchVal = ref(false)
 const adminUrl = import.meta.env.VITE_ADMIN_DASHBOARD
 
 // Convertimos el valor a booleano explícitamente
-const isSuperuser = ref(localStorage.getItem('autorent_leon_is_superuser') === 'true')
+const isSuperuser = ref('');
+
+const token = localStorage.getItem('autorent_leon_token');
+
+if (token) {
+  try {
+    const decoded = jwtDecode(token);
+    isSuperuser.value = decoded.is_superuser || '';
+  } catch (error) {
+    console.error('Error decoding JWT token:', error);
+  }
+}
 
 </script>
 
@@ -34,12 +46,8 @@ const isSuperuser = ref(localStorage.getItem('autorent_leon_is_superuser') === '
           <PillTag label="Verified" color="info" :icon="mdiCheckDecagram" />
 
           <!-- Solo mostramos el botón si el usuario es superusuario -->
-          <a 
-            v-if="isSuperuser" 
-            :href="adminUrl"
-            target="_blank"
-            class="mt-3 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl shadow-md transition duration-150 ease-in-out"
-          >
+          <a v-if="isSuperuser" :href="adminUrl" target="_blank"
+            class="mt-3 ml-2 inline-flex items-center px-4 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-full shadow transition duration-150 ease-in-out">
             Ir al Panel de Administración
           </a>
         </div>

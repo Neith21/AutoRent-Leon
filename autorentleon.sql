@@ -14,8 +14,13 @@ SET user_image = 'hola.png'
 WHERE user_image IS NULL OR user_image = '';
 SET SQL_SAFE_UPDATES = 1;
 
+UPDATE auth_user
+SET is_active = 1
+WHERE id = 12;
 
 
+INSERT INTO users_metadata (user_id, user_image) VALUES
+(1, 'hola.png')
 
 
 -- --------------------------------------------------------------------------------------------------------------------

@@ -1,10 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from 'axios'
+import { jwtDecode } from "jwt-decode";
+
 
 export const useMainStore = defineStore('main', () => {
-  const userName = ref(localStorage.getItem('autorent_leon_name'))
-  const userEmail = ref(localStorage.getItem('autorent_leon_email'))
+  const userName = ref('');
+  const userEmail = ref('');
+  
+  const token = localStorage.getItem('autorent_leon_token');
+  
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      userName.value = decoded.name || '';
+      userEmail.value = decoded.email || '';
+    } catch (error) {
+      console.error('Error decoding JWT token:', error);
+    }
+  }
+
 
   const userAvatar = computed(
     () =>

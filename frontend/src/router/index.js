@@ -19,6 +19,7 @@ const routes = [
   {
     meta: {
       title: 'Tables',
+      secure: true
     },
     path: '/tables',
     name: 'tables',
@@ -27,6 +28,7 @@ const routes = [
   {
     meta: {
       title: 'Forms',
+      secure: true
     },
     path: '/forms',
     name: 'forms',
@@ -35,6 +37,7 @@ const routes = [
   {
     meta: {
       title: 'Profile',
+      secure: true
     },
     path: '/profile',
     name: 'profile',

@@ -178,6 +178,9 @@ class Login(APIView):
             
             payload = {
                 "id": user.id,
+                "name": user.first_name,
+                "email": user.email,
+                "is_superuser": user.is_superuser,
                 "iss": os.getenv("BASE_URL"),
                 "iat": int(time.time()),
                 "exp": expiration_timestamp
@@ -189,10 +192,6 @@ class Login(APIView):
 
                 token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS512')
                 return JsonResponse({
-                    "id": user.id,
-                    "name": user.first_name,
-                    "email": user.email,
-                    "is_superuser": user.is_superuser,
                     "token": token
                 })
             except Exception as e:

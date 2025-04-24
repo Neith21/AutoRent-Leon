@@ -11,16 +11,17 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@fancyapps/ui": "^4.0.31",
     "@mdi/js": "^7.4.47",
+    "@vee-validate/yup": "^4.15.0",
     "axios": "^1.8.1",
     "chart.js": "^4.4.0",
+    "jwt-decode": "^4.0.0",
     "numeral": "^2.0.6",
     "pinia": "^3.0.1",
+    "vee-validate": "^4.15.0",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.0",
-    "@fancyapps/ui": "^4.0.31",
-    "@vee-validate/yup": "^4.15.0",
-    "vee-validate": "^4.15.0"
+    "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
@@ -30,10 +31,10 @@
     "@vue/eslint-config-prettier": "^10.2.0",
     "eslint": "^9.20.1",
     "eslint-plugin-vue": "^9.32.0",
+    "globals": "^16.0.0",
     "prettier": "^3.5.1",
     "tailwindcss": "^4.0.9",
     "vite": "^6.1.0",
-    "vite-plugin-vue-devtools": "^7.7.2",
-    "globals": "^16.0.0"
+    "vite-plugin-vue-devtools": "^7.7.2"
   }
 }
