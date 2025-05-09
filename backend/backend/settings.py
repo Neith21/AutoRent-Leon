@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-dxs2airer=djcxizhofcdx_v+7drsy^7r%ux36ne@-x^%@9=$5
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG')
 
-ALLOWED_HOSTS = ['192.168.1.6']
+ALLOWED_HOSTS = [os.getenv('BASE_URL'), '*']
 
 
 # Application definition
@@ -66,10 +66,10 @@ MIDDLEWARE = [
 CORS_ORIGIN_ALLOW_ALL=True
 CORS_ALLOW_CREDENTIALS=True
 CORS_ORIGIN_WHITELIST=[
-    'http://192.168.1.6:5173',
+    f"{os.getenv('BASE_URL')}:{os.getenv('BASE_URL_FRONTEND_PORT')}",
 ]
 CORS_ORIGIN_REGEX_WHITELIST=[
-    'http://192.168.1.9:5173',
+    f"{os.getenv('BASE_URL')}:{os.getenv('BASE_URL_FRONTEND_PORT')}",
 ]
 
 ROOT_URLCONF = 'backend.urls'

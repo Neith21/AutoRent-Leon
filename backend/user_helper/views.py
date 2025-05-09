@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from jose import jwt
 from django.conf import settings
 from django.contrib.auth.models import User
+from simple_history.utils import update_change_reason
 
 #Editar user_image
 from dotenv import load_dotenv
@@ -52,7 +53,8 @@ class UserRU(APIView):
                 "data": serializer.data
             }, status=HTTPStatus.OK)
 
-        except UsersMetadata.DoesNotExist:
+        except UsersMetadata.DoesNotExist as e:
+            log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": "Resource not found"
@@ -63,7 +65,8 @@ class UserRU(APIView):
     def put(self, request, id):
         try:
             user = User.objects.get(pk=id)
-        except User.DoesNotExist:
+        except User.DoesNotExist as e:
+            log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": "User not found"
@@ -81,18 +84,27 @@ class UserRU(APIView):
                 update_data["email"] = request.data["email"]
 
             if update_data:
-                User.objects.filter(pk=id).update(**update_data)
+                #User.objects.filter(pk=id).update(**update_data)
+                user._history_user = User.objects.get(id=int(request.data.get("user_id")))
+                user._change_reason = "actualizacion de datos"
+                for key, value in update_data.items():
+                    setattr(user, key, value)
+                # Guardar para que se registre en el historial
+                user.save()
+
                 return JsonResponse({
                     "status": "ok",
                     "message": "User successfully updated"
                 }, status=HTTPStatus.OK)
             else:
+                log_error(user=request.user, exception=Exception(f"No valid fields provided"))
                 return JsonResponse({
                     "status": "error",
                     "message": "No valid fields provided"
                 }, status=HTTPStatus.BAD_REQUEST)
 
         except Exception as e:
+            log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": "Unexpected error occurred"
@@ -113,7 +125,8 @@ class EditImage(APIView):
         try:
             user_metadata = UsersMetadata.objects.get(user_id=request.data["id"])
             previous_image = user_metadata.user_image
-        except UsersMetadata.DoesNotExist:
+        except UsersMetadata.DoesNotExist as e:
+            log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": "User metadata not found"
@@ -123,7 +136,8 @@ class EditImage(APIView):
 
         try:
             user_image = f"{datetime.timestamp(datetime.now())}{os.path.splitext(str(request.FILES['user_image']))[1]}"
-        except Exception:
+        except Exception as e:
+            log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": "An image file must be attached"
@@ -133,14 +147,19 @@ class EditImage(APIView):
             try:
                 fs.save(f"user/{user_image}", request.FILES['user_image'])
                 fs.url(request.FILES['user_image'])
-            except Exception:
+            except Exception as e:
+                log_error(user=request.user, exception=e)
                 return JsonResponse({
                     "status": "error",
                     "message": "Failed to upload the image"
                 }, status=HTTPStatus.BAD_REQUEST)
 
             try:
-                UsersMetadata.objects.filter(user_id=request.data["id"]).update(user_image=user_image)
+                #UsersMetadata.objects.filter(user_id=request.data["id"]).update(user_image=user_image)
+                user_metadata._history_user = UsersMetadata.objects.get(id=int(request.data.get("user_id")))  # Establecer quién hace el cambio
+                user_metadata._change_reason = "actualizacion de imagen"
+                user_metadata.user_image = user_image      # Actualizar el campo
+                user_metadata.save()
 
                 # Remove the old image from the system
                 if previous_image:
@@ -150,10 +169,12 @@ class EditImage(APIView):
                     "status": "ok",
                     "message": "Image successfully updated"
                 }, status=HTTPStatus.OK)
-            except Exception:
+            except Exception as e:
+                log_error(user=request.user, exception=e)
                 raise Http404
 
         else:
+            log_error(user=request.user, exception=Exception(f"Invalid image format"))
             return JsonResponse({
                 "status": "error",
                 "message": "user_image must be PNG or JPEG"
@@ -162,19 +183,23 @@ class EditImage(APIView):
 
 class UserD(APIView):
 
-
     @is_authenticated()
     def put(self, request, id):
         try:
             user = User.objects.get(pk=id)
-        except User.DoesNotExist:
+        except User.DoesNotExist as e:
+            log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": "User not found"
             }, status=HTTPStatus.NOT_FOUND)
 
         try:
-            User.objects.filter(pk=id).update(is_active=0)
+            #User.objects.filter(pk=id).update(is_active=0)
+            user._history_user = User.objects.get(id=id)  # Establecer quién hace el cambio
+            user._change_reason = "desactivacion de usuario"
+            user.is_active = 0                 # Desactivar el usuario
+            user.save()                        # Guardar para registrar en el historial
 
             return JsonResponse({
                 "status": "ok",
@@ -182,6 +207,7 @@ class UserD(APIView):
             }, status=HTTPStatus.OK)
 
         except Exception as e:
+            log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": "Unexpected error occurred"

@@ -42,7 +42,7 @@ class Register(APIView):
             }, status=HTTPStatus.CONFLICT)  # 409 Conflict
 
         token = uuid.uuid4()
-        url = f"{os.getenv('BASE_URL')}api/v1/user-control/verification/{token}"
+        url = f"{os.getenv('BASE_URL')+':'+os.getenv('BASE_URL_BACKEND_PORT')}/api/v1/user-control/verification/{token}"
 
         try:
             # Uso de atomic para crear una transacción
@@ -131,7 +131,7 @@ class Verification(APIView):
             User.objects.filter(id=data.user_id).update(is_active=1)
 
             # Redirect to frontend
-            return HttpResponseRedirect(f"http://192.168.1.6:5173/autorent-leon/#/login")
+            return HttpResponseRedirect(f"{os.getenv('BASE_URL')}:{os.getenv('BASE_URL_FRONTEND_PORT')}/autorent-leon/#/login")
             
         except UsersMetadata.DoesNotExist as e:
             log_error(user=request.user, exception=e)
@@ -181,7 +181,7 @@ class Login(APIView):
                 "name": user.first_name,
                 "email": user.email,
                 "is_superuser": user.is_superuser,
-                "iss": os.getenv("BASE_URL"),
+                "iss": os.getenv("BASE_URL")+':'+os.getenv('BASE_URL_BACKEND_PORT'),
                 "iat": int(time.time()),
                 "exp": expiration_timestamp
             }
