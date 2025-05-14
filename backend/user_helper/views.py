@@ -19,16 +19,16 @@ from utilities.decorators import is_authenticated
 from user_helper.serializers import *
 from user_control.models import *
 from error_log.utils import log_error
-from utilities.decorators import is_authenticated
+from utilities.decorators import authenticate_user
 
 # Create your views here.
 
 
 class UserR(APIView):
     
-    @is_authenticated()
+    @authenticate_user(required_permission='view_user')
     def get(self, request):
-        # Solo metadata de usuarios cuyo User.is_active == True
+        # El usuario ya está autenticado y tiene los permisos necesarios en este punto
         data = UsersMetadata.objects.filter(
             user__is_active=True
         ).order_by('id')
@@ -42,7 +42,7 @@ class UserR(APIView):
 class UserRU(APIView):
     
     #Este metodo no es para devolver un registro en base a su id, sino en base a un id foraneo contenido en ella, es distinta al tradicional
-    @is_authenticated()
+    @authenticate_user(required_permission='view_user')
     def get(self, request, id):
         try:
             user = User.objects.filter(pk=id).get()

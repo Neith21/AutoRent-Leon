@@ -80,7 +80,7 @@ SLUGs:
 Crear tablas con migraciones:
 	1 ejecutar el comando: *python manage.py migrate*
 	2 *python manage.py makemigrations*
-	3 *Python manage.py migrate*
+	3 *python manage.py migrate*
 
 GET Categorías:
 	Tenes que serializar los registros traídos, crear un nuevo archivo dentro de la app llamado *serializers.py* y dentro de él poner lo que usaste tú.
