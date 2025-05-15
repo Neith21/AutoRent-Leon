@@ -4,6 +4,12 @@ USE autorentleon;
 
 SELECT * FROM auth_user;
 SELECT * FROM users_metadata;
+SELECT * FROM error_log_errorlog;
+SELECT * FROM auth_permission;
+SELECT * FROM auth_historicaluser;
+SELECT * FROM django_session;
+SELECT * FROM django_content_type;
+SELECT * FROM branch;
 
 select * from user_control_historicalusersmetadata;
 select * from error_log_errorlog;
@@ -18,9 +24,121 @@ UPDATE auth_user
 SET is_active = 1
 WHERE id = 12;
 
+UPDATE branch
+SET active = 1
+WHERE id = 1;
+
+UPDATE branch
+SET modified_by = 1
+WHERE id = 1;
+
+UPDATE auth_user
+SET is_staff = 1
+WHERE id = 33;
 
 INSERT INTO users_metadata (user_id, user_image) VALUES
-(1, 'hola.png')
+(1, 'hola.png');
+
+-- 1. COMPANY
+CREATE TABLE company (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    trade_name VARCHAR(100),
+    nrc VARCHAR(50),
+    classification ENUM('pequeña', 'mediana', 'gran'),
+    phone VARCHAR(20),
+    address TEXT,
+    logo_url VARCHAR(255),
+    email VARCHAR(100),
+    website VARCHAR(100),
+    active BOOLEAN DEFAULT TRUE,
+    created_by VARCHAR(50),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modified_by VARCHAR(50),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 2. BRANCH
+CREATE TABLE branch (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    phone VARCHAR(20),
+    address TEXT,
+    department VARCHAR(50),
+    district VARCHAR(50),
+    email VARCHAR(100),
+    active BOOLEAN DEFAULT TRUE,
+    created_by VARCHAR(50),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modified_by VARCHAR(50),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 3. VEHICLE CATEGORY
+CREATE TABLE vehicle_category (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50),
+    active BOOLEAN DEFAULT TRUE,
+    created_by VARCHAR(50),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modified_by VARCHAR(50),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 4. BRAND
+CREATE TABLE brand (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    active BOOLEAN DEFAULT TRUE,
+    created_by VARCHAR(50),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modified_by VARCHAR(50),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 5. MODEL
+CREATE TABLE model (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    brand_id INT,
+    name VARCHAR(100),
+    active BOOLEAN DEFAULT TRUE,
+    created_by VARCHAR(50),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modified_by VARCHAR(50),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (brand_id) REFERENCES brand(id)
+);
+
+-- 6. VEHICLE
+CREATE TABLE vehicle (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    plate VARCHAR(20),
+    model_id INT,
+    category_id INT,
+    color VARCHAR(50),
+    year YEAR,
+    engine VARCHAR(100),
+    engine_type VARCHAR(100),
+    engine_number VARCHAR(100),
+    vin VARCHAR(100),
+    seat_count INT,
+    description TEXT,
+    status ENUM('Disponible', 'En mantenimiento', 'En reparacion', 'Reservado', 'Alquilado'),
+    active BOOLEAN DEFAULT TRUE,
+    created_by VARCHAR(50),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modified_by VARCHAR(50),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (model_id) REFERENCES model(id),
+    FOREIGN KEY (category_id) REFERENCES vehicle_category(id)
+);
+
+CREATE TABLE vehicle_image (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id INT,
+    image_url VARCHAR(255),
+    FOREIGN KEY (vehicle_id) REFERENCES vehicle(id)
+);
+
 
 
 -- --------------------------------------------------------------------------------------------------------------------

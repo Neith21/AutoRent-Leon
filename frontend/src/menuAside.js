@@ -12,9 +12,20 @@ export default [
     label: 'Dashboard',
   },
   {
-    to: '/tables',
     label: 'Tables',
     icon: mdiTable,
+    menu: [
+      {
+        to: '/tables',
+        label: 'Users',
+        icon: mdiAccountCircle
+      },
+      {
+        to: '/branches',
+        label: 'Branches',
+        icon: mdiAccountCircle
+      }
+    ]
   },
   {
     to: '/forms',

@@ -26,7 +26,7 @@ from utilities.decorators import authenticate_user
 
 class UserR(APIView):
     
-    @authenticate_user(required_permission='view_user')
+    @is_authenticated()
     def get(self, request):
         # El usuario ya está autenticado y tiene los permisos necesarios en este punto
         data = UsersMetadata.objects.filter(
@@ -42,7 +42,7 @@ class UserR(APIView):
 class UserRU(APIView):
     
     #Este metodo no es para devolver un registro en base a su id, sino en base a un id foraneo contenido en ella, es distinta al tradicional
-    @authenticate_user(required_permission='view_user')
+    @is_authenticated()
     def get(self, request, id):
         try:
             user = User.objects.filter(pk=id).get()

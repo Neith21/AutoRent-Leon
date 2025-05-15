@@ -27,6 +27,15 @@ const routes = [
   },
   {
     meta: {
+      title: 'Branches',
+      secure: true
+    },
+    path: '/branches',
+    name: 'branches',
+    component: () => import('@/views/BranchView.vue'),
+  },
+  {
+    meta: {
       title: 'Forms',
       secure: true
     },

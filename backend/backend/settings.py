@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'user_control',
     'error_log',
     'user_helper',
+    'branch',
 ]
 
 MIDDLEWARE = [

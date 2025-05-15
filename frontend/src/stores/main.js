@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 
 export const useMainStore = defineStore('main', () => {
   const userName = ref('');
+  const userLastName = ref('');
   const userEmail = ref('');
   
   const token = localStorage.getItem('autorent_leon_token');
@@ -14,6 +15,7 @@ export const useMainStore = defineStore('main', () => {
     try {
       const decoded = jwtDecode(token);
       userName.value = decoded.name || '';
+      userLastName.value = decoded.last_name || '';
       userEmail.value = decoded.email || '';
     } catch (error) {
       console.error('Error decoding JWT token:', error);
@@ -37,6 +39,9 @@ export const useMainStore = defineStore('main', () => {
   function setUser(payload) {
     if (payload.name) {
       userName.value = payload.name
+    }
+    if (payload.last_name) {
+      userLastName.value = payload.last_name
     }
     if (payload.email) {
       userEmail.value = payload.email
@@ -67,6 +72,7 @@ export const useMainStore = defineStore('main', () => {
 
   return {
     userName,
+    userLastName,
     userEmail,
     userAvatar,
     isFieldFocusRegistered,

@@ -71,13 +71,6 @@ window.addEventListener('keydown', (e) => {
       <div class="space-y-3">
         <slot />
       </div>
-
-      <template #footer>
-        <BaseButtons>
-          <BaseButton :label="buttonLabel" :color="button" @click="confirm" />
-          <BaseButton v-if="hasCancel" label="Cancel" :color="button" outline @click="cancel" />
-        </BaseButtons>
-      </template>
     </CardBox>
   </OverlayLayer>
 </template>

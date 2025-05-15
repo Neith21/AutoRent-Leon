@@ -16,4 +16,4 @@ class UserHelperSerializer(serializers.ModelSerializer):
         fields = ("user_id", "username", "first_name", "last_name", "email", "user_image")
 
     def get_user_image(self, obj):
-        return f"{os.getenv('BASE_URL')}uploads/user/{obj.user_image}"
+        return f"{os.getenv('BASE_URL')}:{os.getenv('BASE_URL_BACKEND_PORT')}/uploads/user/{obj.user_image}"

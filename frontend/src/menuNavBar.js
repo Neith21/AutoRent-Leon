@@ -1,8 +1,5 @@
 import { mdiAccount, mdiLogout, mdiThemeLightDark } from '@mdi/js'
 
-// No inicialices el store aquí
-// let store = useAuthStore(); <- Eliminar esta línea
-
 export default [
   {
     isCurrentUser: true,
@@ -19,5 +16,11 @@ export default [
     label: 'Light/Dark',
     isDesktopNoLabel: true,
     isToggleLightDark: true,
-  }
+  },
+  {
+    icon: mdiLogout,
+    label: 'Log out',
+    isDesktopNoLabel: true,
+    isLogout: true,
+  },
 ]
