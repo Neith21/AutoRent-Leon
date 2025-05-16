@@ -37,10 +37,18 @@ if (token) {
 <template>
   <CardBox>
     <BaseLevel type="justify-around lg:justify-center">
-      <UserAvatarCurrentUser class="lg:mx-12" />
+      <UserAvatarCurrentUser class="
+      rounded-full
+      bg-gray-100 dark:bg-slate-800
+      w-12 h-12           /* móvil: 3rem x 3rem */
+      sm:w-16 sm:h-16     /* ≥640px: 4rem x 4rem */
+      md:w-24 md:h-24     /* ≥768px: 6rem x 6rem */
+      lg:w-32 lg:h-32     /* ≥1024px: 8rem x 8rem */
+      xl:w-40 xl:h-40     /* ≥1280px: 10rem x 10rem */
+      " />
       <div class="space-y-3 text-center md:text-left lg:mx-12">
         <h1 class="text-2xl">
-          Howdy, <b>{{ userName }}</b>!
+          ¡Hola, <b>{{ userName }}</b>!
         </h1>
         <div class="flex justify-center md:block">
           <PillTag label="Verified" color="info" :icon="mdiCheckDecagram" />

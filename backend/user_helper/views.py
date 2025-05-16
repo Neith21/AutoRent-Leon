@@ -6,8 +6,9 @@ from django.utils.dateformat import DateFormat
 from dotenv import load_dotenv
 from jose import jwt
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from simple_history.utils import update_change_reason
+from django.contrib.auth import authenticate
 
 #Editar user_image
 from dotenv import load_dotenv
@@ -65,8 +66,7 @@ class UserRU(APIView):
     def put(self, request, id):
         try:
             user = User.objects.get(pk=id)
-        except User.DoesNotExist as e:
-            log_error(user=request.user, exception=e)
+        except User.DoesNotExist:
             return JsonResponse({
                 "status": "error",
                 "message": "User not found"
@@ -84,27 +84,18 @@ class UserRU(APIView):
                 update_data["email"] = request.data["email"]
 
             if update_data:
-                #User.objects.filter(pk=id).update(**update_data)
-                user._history_user = User.objects.get(id=int(request.data.get("user_id")))
-                user._change_reason = "actualizacion de datos"
-                for key, value in update_data.items():
-                    setattr(user, key, value)
-                # Guardar para que se registre en el historial
-                user.save()
-
+                User.objects.filter(pk=id).update(**update_data)
                 return JsonResponse({
                     "status": "ok",
                     "message": "User successfully updated"
                 }, status=HTTPStatus.OK)
             else:
-                log_error(user=request.user, exception=Exception(f"No valid fields provided"))
                 return JsonResponse({
                     "status": "error",
                     "message": "No valid fields provided"
                 }, status=HTTPStatus.BAD_REQUEST)
 
         except Exception as e:
-            log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": "Unexpected error occurred"
@@ -125,8 +116,7 @@ class EditImage(APIView):
         try:
             user_metadata = UsersMetadata.objects.get(user_id=request.data["id"])
             previous_image = user_metadata.user_image
-        except UsersMetadata.DoesNotExist as e:
-            log_error(user=request.user, exception=e)
+        except UsersMetadata.DoesNotExist:
             return JsonResponse({
                 "status": "error",
                 "message": "User metadata not found"
@@ -136,8 +126,7 @@ class EditImage(APIView):
 
         try:
             user_image = f"{datetime.timestamp(datetime.now())}{os.path.splitext(str(request.FILES['user_image']))[1]}"
-        except Exception as e:
-            log_error(user=request.user, exception=e)
+        except Exception:
             return JsonResponse({
                 "status": "error",
                 "message": "An image file must be attached"
@@ -147,19 +136,14 @@ class EditImage(APIView):
             try:
                 fs.save(f"user/{user_image}", request.FILES['user_image'])
                 fs.url(request.FILES['user_image'])
-            except Exception as e:
-                log_error(user=request.user, exception=e)
+            except Exception:
                 return JsonResponse({
                     "status": "error",
                     "message": "Failed to upload the image"
                 }, status=HTTPStatus.BAD_REQUEST)
 
             try:
-                #UsersMetadata.objects.filter(user_id=request.data["id"]).update(user_image=user_image)
-                user_metadata._history_user = UsersMetadata.objects.get(id=int(request.data.get("user_id")))  # Establecer quién hace el cambio
-                user_metadata._change_reason = "actualizacion de imagen"
-                user_metadata.user_image = user_image      # Actualizar el campo
-                user_metadata.save()
+                UsersMetadata.objects.filter(user_id=request.data["id"]).update(user_image=user_image)
 
                 # Remove the old image from the system
                 if previous_image:
@@ -169,12 +153,10 @@ class EditImage(APIView):
                     "status": "ok",
                     "message": "Image successfully updated"
                 }, status=HTTPStatus.OK)
-            except Exception as e:
-                log_error(user=request.user, exception=e)
+            except Exception:
                 raise Http404
 
         else:
-            log_error(user=request.user, exception=Exception(f"Invalid image format"))
             return JsonResponse({
                 "status": "error",
                 "message": "user_image must be PNG or JPEG"
@@ -212,7 +194,89 @@ class UserD(APIView):
                 "status": "error",
                 "message": "Unexpected error occurred"
             }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        
 
+class EditPassword(APIView):
+
+    @is_authenticated()
+    def post(self, request):
+        # Validate required fields
+        required_fields = ["id", "current_password", "new_password", "confirm_password"]
+        error = validate_required_fields(request.data, required_fields)
+        if error:
+            log_error(user=request.user, exception=Exception("All fields are required"))
+            return error
+        
+        # Extract data from request
+        user_id = request.data.get("id")
+        email = request.data.get("email")
+        current_password = request.data.get("current_password")
+        new_password = request.data.get("new_password")
+        confirm_password = request.data.get("confirm_password")
+        
+        # Validate new password matches confirmation
+        if new_password != confirm_password:
+            return JsonResponse({
+                "status": "error",
+                "message": "New password and confirmation do not match"
+            }, status=HTTPStatus.BAD_REQUEST)
+        
+        try:
+            # Get the user
+            user = User.objects.filter(pk=user_id).get()
+            
+            auth = authenticate(request, username=email, password=current_password)
+            if auth is not None:
+                # Set new password
+                user.set_password(new_password)
+                user.save()
+                
+                return JsonResponse({
+                    "status": "success",
+                    "message": "Password updated successfully"
+                }, status=HTTPStatus.OK)
+        
+            return JsonResponse({
+                    "status": "error",
+                    "message": "Current password is incorrect"
+                }, status=HTTPStatus.BAD_REQUEST)
+            
+        except User.DoesNotExist:
+            return JsonResponse({
+                "status": "error",
+                "message": "User not found"
+            }, status=HTTPStatus.BAD_REQUEST)
+        except Exception as e:
+            log_error(user=request.user, exception=e)
+            return JsonResponse({
+                "status": "error",
+                "message": "An error occurred while updating the password"
+            }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        
+
+class UserPermissionsView(APIView):
+
+
+    def get(self, request, id):
+        try:
+            user_obj = User.objects.get(pk=id)
+        except User.DoesNotExist:
+            return JsonResponse({
+                "status": "error",
+                "message": "User not found"
+            }, status=HTTPStatus.NOT_FOUND)
+
+        direct_perms = user_obj.user_permissions.values_list('codename', flat=True)
+
+        group_perms = Permission.objects.filter(
+            group__user=user_obj
+        ).values_list('codename', flat=True)
+
+        all_perms = sorted(set(direct_perms) | set(group_perms))
+
+        return JsonResponse({
+            "permissions": all_perms
+        }, status=HTTPStatus.OK)
 
 
 def validate_required_fields(data, fields):
