@@ -40,7 +40,7 @@ def authenticate_user(required_permission=None):
                     "message": "Unauthorized access - Token expired"
                 }, status=HTTPStatus.UNAUTHORIZED)
             
-            user_id = decoded.get("id")  # Corregido para usar "id" en lugar de "user_id"
+            user_id = decoded.get("id")
             try:
                 user = User.objects.get(id=user_id)
                 

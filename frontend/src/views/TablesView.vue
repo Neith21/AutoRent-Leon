@@ -13,10 +13,10 @@ import CardBoxComponentEmpty from '@/components/CardBoxComponentEmpty.vue'
 <template>
   <LayoutAuthenticated>
     <SectionMain>
-      <SectionTitleLineWithButton :icon="mdiTableBorder" title="Tables" main />
-      <NotificationBar color="info" :icon="mdiMonitorCellphone">
+      <SectionTitleLineWithButton :icon="mdiTableBorder" title="Usuarios" main />
+      <!--<NotificationBar color="info" :icon="mdiMonitorCellphone">
         <b>Responsive table.</b> Collapses on mobile
-      </NotificationBar>
+      </NotificationBar>-->
 
       <CardBox class="mb-6" has-table>
         <TableSampleClients checkable />

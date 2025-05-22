@@ -18,19 +18,22 @@ export default [
       {
         to: '/tables',
         label: 'Users',
-        icon: mdiAccountCircle
+        icon: mdiAccountCircle,
+        requiredPermission: 'user.view_user'
       },
       {
         to: '/branches',
         label: 'Branches',
-        icon: mdiAccountCircle
+        icon: mdiAccountCircle,
+        requiredPermission: 'branch.view_branch'
+      },
+      {
+        to: '/vehicles',
+        label: 'Vehicles',
+        icon: mdiAccountCircle,
+        requiredPermission: 'vehicle.view_vehicle'
       }
     ]
-  },
-  {
-    to: '/forms',
-    label: 'Forms',
-    icon: mdiSquareEditOutline,
   },
   {
     to: '/profile',

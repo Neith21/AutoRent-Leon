@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-dxs2airer=djcxizhofcdx_v+7drsy^7r%ux36ne@-x^%@9=$5'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG')
+DEBUG = True  #os.getenv('DEBUG')
 
 ALLOWED_HOSTS = [os.getenv('BASE_URL'), '*']
 
@@ -49,6 +49,14 @@ INSTALLED_APPS = [
     'error_log',
     'user_helper',
     'branch',
+    'vehiclecategory',
+    'brand',
+    'vehiclemodel',
+    'vehicle',
+    'vehicleimage',
+    'department',
+    'municipality',
+    'district',
 ]
 
 MIDDLEWARE = [

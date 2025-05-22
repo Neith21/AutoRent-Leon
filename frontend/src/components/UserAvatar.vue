@@ -11,39 +11,40 @@ const props = defineProps({
   src: { type: String, default: null }
 })
 
-const src = computed(() =>
+const computedSrc = computed(() =>
   props.src ?? user.value.user_image
 )
 
 onMounted(async () => {
   if (!token) return
-  try {
-    const { id } = jwtDecode(token)
-    const config = {
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${token}`
+  if (!props.src) { 
+    try {
+      const { id } = jwtDecode(token)
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
       }
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}user/${id}`,
+        config
+      )
+      user.value = data?.data || {}
+    } catch (error) {
+      console.error('Error fetching user for avatar fallback:', error)
     }
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_API_URL}user/${id}`,
-      config
-    )
-    user.value = data?.data || {}
-  } catch (error) {
-    console.error('Error fetching user:', error)
   }
 })
 </script>
 
 <template>
-  <div>
+  <div class="overflow-hidden">
     <img
-      :src="src"
+      :src="computedSrc"
       :alt="username"
-      class="rounded-full block h-auto w-full max-w-full 
-             bg-gray-100 dark:bg-slate-800"
-    />
+      class="rounded-full block w-full h-full object-cover"
+      />
     <slot />
   </div>
 </template>

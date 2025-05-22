@@ -205,7 +205,6 @@ const submitPass = async () => {
       new_password: passwordForm.password,
       confirm_password: passwordForm.password_confirmation,
     };
-    // Example endpoint, adjust to your API
     const response = await axios.post(`${import.meta.env.VITE_API_URL}user/edit/password`, payload, getAuthConfig());
 
     if (response.status === 200) {

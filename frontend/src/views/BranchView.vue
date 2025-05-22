@@ -14,12 +14,12 @@ import CardBoxComponentEmpty from '@/components/CardBoxComponentEmpty.vue'
   <LayoutAuthenticated>
     <SectionMain>
       <SectionTitleLineWithButton :icon="mdiTableBorder" title="Sucursales" main />
-      <NotificationBar color="info" :icon="mdiMonitorCellphone">
+      <!--<NotificationBar color="info" :icon="mdiMonitorCellphone">
         <b>Responsive table.</b> Collapses on mobile
-      </NotificationBar>
+      </NotificationBar>-->
 
       <CardBox class="mb-6" has-table>
-        <BranchTable checkable />
+        <BranchTable />
       </CardBox>
 
       <!--<NotificationBar color="danger" :icon="mdiTableOff">

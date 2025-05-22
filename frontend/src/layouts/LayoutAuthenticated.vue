@@ -1,19 +1,17 @@
 <script setup>
 import { mdiForwardburger, mdiBackburger, mdiMenu } from '@mdi/js'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import menuAside from '@/menuAside.js'
+import menuAsideItemsDefinition from '@/menuAside.js'
 import menuNavBar from '@/menuNavBar.js'
 import { useDarkModeStore } from '@/stores/darkMode.js'
-import BaseIcon from '@/components/BaseIcon.vue'
-import FormControl from '@/components/FormControl.vue'
+import BaseIcon from '@/components/BaseIcon.vue' 
 import NavBar from '@/components/NavBar.vue'
 import NavBarItemPlain from '@/components/NavBarItemPlain.vue'
 import AsideMenu from '@/components/AsideMenu.vue'
 import { useAuthStore } from '@/stores/authStore'
-import FooterBar from '@/components/FooterBar.vue'
 
-let store = useAuthStore();
+const authStore = useAuthStore();
 
 const layoutAsidePadding = 'xl:pl-60'
 
@@ -35,9 +33,56 @@ const menuClick = (event, item) => {
   }
 
   if (item.isLogout) {
-    store.logout()
+    authStore.logout()
   }
+
 }
+
+const filteredMenuAside = computed(() => {
+  const canShowItem = (item) => {
+    if (item.requiredPermission) {
+      return authStore.hasPermission(item.requiredPermission);
+    }
+    return true;
+  };
+
+  const processMenuItems = (items) => {
+    if (!items) {
+      return [];
+    }
+
+    return items
+      .map(item => {
+        if (!canShowItem(item)) {
+          return null;
+        }
+
+        if (item.menu && Array.isArray(item.menu)) {
+          const filteredSubMenu = processMenuItems(item.menu);
+          
+          if (item.to || filteredSubMenu.length > 0) {
+            return { ...item, menu: filteredSubMenu };
+          } else {
+            return null; 
+          }
+        }
+
+        return item;
+      })
+      .filter(item => item !== null);
+  };
+
+  if (authStore.isLoadingPermissions) {
+    return []; 
+  }
+  if (authStore.permissionsError) {
+    console.error("Error al cargar permisos, el menú lateral podría estar incompleto:", authStore.permissionsError);
+    return [{ label: 'Error de menú', icon: mdiAlertCircle }];
+  }
+  
+  return processMenuItems(menuAsideItemsDefinition);
+});
+
 </script>
 
 <template>
@@ -68,11 +113,10 @@ const menuClick = (event, item) => {
       <AsideMenu
         :is-aside-mobile-expanded="isAsideMobileExpanded"
         :is-aside-lg-active="isAsideLgActive"
-        :menu="menuAside"
-        @menu-click="menuClick"
+        :menu="filteredMenuAside" @menu-click="menuClick" 
         @aside-lg-close-click="isAsideLgActive = false"
       />
       <slot />
-    </div>
+      </div>
   </div>
 </template>

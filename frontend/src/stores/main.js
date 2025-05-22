@@ -3,14 +3,23 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 import { jwtDecode } from "jwt-decode";
 
+// import { useToast } from 'vue-toastification';
 
 export const useMainStore = defineStore('main', () => {
   const userName = ref('');
   const userLastName = ref('');
   const userEmail = ref('');
-  
+
+  const notification = ref({
+    show: false,
+    message: '',
+    color: 'info',
+    icon: null,
+    timeoutId: null,
+  });
+
   const token = localStorage.getItem('autorent_leon_token');
-  
+
   if (token) {
     try {
       const decoded = jwtDecode(token);
@@ -21,7 +30,6 @@ export const useMainStore = defineStore('main', () => {
       console.error('Error decoding JWT token:', error);
     }
   }
-
 
   const userAvatar = computed(
     () =>
@@ -55,7 +63,7 @@ export const useMainStore = defineStore('main', () => {
         clients.value = result?.data?.data
       })
       .catch((error) => {
-        alert(error.message)
+        notify({ message: `Error cargando clientes: ${error.message}`, color: 'danger' });
       })
   }
 
@@ -66,8 +74,43 @@ export const useMainStore = defineStore('main', () => {
         history.value = result?.data?.data
       })
       .catch((error) => {
-        alert(error.message)
+        notify({ message: `Error cargando historial: ${error.message}`, color: 'danger' });
+        // alert(error.message)
       })
+  }
+
+  /**
+   * Muestra una notificación al usuariu
+   * @param {object} options - Opciones de la notificación
+   * @param {string} options.message - El mensaje a mostrar
+   * @param {string} [options.color='info'] - El color/tipo de la notificación
+   * @param {string|null} [options.icon=null] - El ícono para la notificación
+   * @param {number} [options.duration=3000] - Duración en ms. 0 para persistente
+   */
+  function notify({ message, color = 'info', icon = null, duration = 3000 }) { // Duración con 3 segundos quedamossss
+    if (notification.value.timeoutId) {
+      clearTimeout(notification.value.timeoutId);
+      notification.value.timeoutId = null;
+    }
+
+    notification.value.message = message;
+    notification.value.color = color;
+    notification.value.icon = icon;
+    notification.value.show = true;
+
+    if (duration > 0) {
+      notification.value.timeoutId = setTimeout(() => {
+        dismissNotification();
+      }, duration);
+    }
+  }
+
+  function dismissNotification() {
+    notification.value.show = false;
+    if (notification.value.timeoutId) {
+      clearTimeout(notification.value.timeoutId);
+      notification.value.timeoutId = null;
+    }
   }
 
   return {
@@ -81,5 +124,9 @@ export const useMainStore = defineStore('main', () => {
     setUser,
     fetchSampleClients,
     fetchSampleHistory,
+
+    notification,
+    notify,
+    dismissNotification,
   }
 })

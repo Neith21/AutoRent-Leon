@@ -7,5 +7,5 @@ urlpatterns = [
     path('user/edit/image', EditImage.as_view()),
     path('user/delete/<int:id>', UserD.as_view()),
     path('user/edit/password', EditPassword.as_view()),
-    path('user/permission/<int:id>', UserPermissionsView.as_view()),
+    path('user/permission', UserPermissionsView.as_view()),
 ]

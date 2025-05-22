@@ -22,6 +22,8 @@ from user_control.models import *
 from error_log.utils import log_error
 from utilities.decorators import authenticate_user
 
+from rest_framework import status as drf_status
+
 # Create your views here.
 
 
@@ -256,27 +258,42 @@ class EditPassword(APIView):
 
 class UserPermissionsView(APIView):
 
+    @is_authenticated()
+    def get(self, request):
+        auth_header = request.headers.get('Authorization')
 
-    def get(self, request, id):
+        token = auth_header.split(" ")[1]
+        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS512'])
+
+        user_id = decoded_token.get("id")
+        if not user_id:
+            return JsonResponse({
+                "estado": "error",
+                "mensaje": "Acceso no autorizado - ID de usuario no encontrado en el token"
+            }, status=drf_status.HTTP_401_UNAUTHORIZED)
+
         try:
-            user_obj = User.objects.get(pk=id)
+            user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return JsonResponse({
-                "status": "error",
-                "message": "User not found"
-            }, status=HTTPStatus.NOT_FOUND)
+                "estado": "error",
+                "mensaje": "Acceso no autorizado - Usuario no encontrado"
+            }, status=drf_status.HTTP_401_UNAUTHORIZED)
 
-        direct_perms = user_obj.user_permissions.values_list('codename', flat=True)
+        if not user.is_active:
+            return JsonResponse({
+                "estado": "error",
+                "mensaje": "Acceso no autorizado - Usuario inactivo"
+            }, status=drf_status.HTTP_403_FORBIDDEN)
 
-        group_perms = Permission.objects.filter(
-            group__user=user_obj
-        ).values_list('codename', flat=True)
+        if user.is_superuser:
+            return JsonResponse({"permissions": True}, status=drf_status.HTTP_200_OK)
+        else:
+            user_permissions_set = user.get_all_permissions()
 
-        all_perms = sorted(set(direct_perms) | set(group_perms))
-
-        return JsonResponse({
-            "permissions": all_perms
-        }, status=HTTPStatus.OK)
+            permissions_list = sorted(list(user_permissions_set))
+            
+            return JsonResponse({"permissions": permissions_list}, status=drf_status.HTTP_200_OK)
 
 
 def validate_required_fields(data, fields):

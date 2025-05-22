@@ -15,10 +15,8 @@ const userName = computed(() => mainStore.userName)
 
 const userSwitchVal = ref(false)
 
-// Corregimos la URL del panel de administración
 const adminUrl = import.meta.env.VITE_ADMIN_DASHBOARD
 
-// Convertimos el valor a booleano explícitamente
 const isSuperuser = ref('');
 
 const token = localStorage.getItem('autorent_leon_token');

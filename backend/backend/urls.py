@@ -29,6 +29,11 @@ urlpatterns = [
     path('api/v1/', include('user_control.urls')),
     path('api/v1/', include('user_helper.urls')),
     path('api/v1/', include('branch.urls')),
+    path('api/v1/', include('vehicle.urls')),
+    path('api/v1/', include('brand.urls')),
+    path('api/v1/', include('vehiclecategory.urls')),
+    path('api/v1/', include('vehicleimage.urls')),
+    path('api/v1/', include('department.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -281,10 +281,6 @@ const exportToExcel = () => {
     <form @submit.prevent="handleSubmit">
       <div class="space-y-4">
         <div>
-          <label for="username" class="block text-sm font-medium">Username</label>
-          <input v-model="form.username" id="username" type="text" class="mt-1 block w-full" required />
-        </div>
-        <div>
           <label for="first_name" class="block text-sm font-medium">Nombre</label>
           <input v-model="form.first_name" id="first_name" type="text" class="mt-1 block w-full" required />
         </div>
@@ -327,11 +323,11 @@ const exportToExcel = () => {
   <!-- Search and Actions Bar -->
   <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
     <div class="flex items-center gap-2">
-      <!-- Si quieres habilitar la creación de usuarios, descomenta esta línea -->
+      <!-- Para crear usuarios -->
       <!--<BaseButton color="info" :icon="mdiPlus" label="Crear Usuario" @click="openCreate" />-->
     </div>
     
-    <div class="flex items-center gap-2">
+    <div v-if="isSuperuser" class="flex items-center gap-2">
       <div class="relative">
         <input 
           v-model="searchTerm"
@@ -348,25 +344,22 @@ const exportToExcel = () => {
         </div>
       </div>
       
-      <!-- Export Buttons -->
       <BaseButton color="success" small :icon="mdiFilePdfBox" title="Exportar a PDF" @click="exportToPDF" />
       <BaseButton color="info" small :icon="mdiFileDelimited" title="Exportar a CSV" @click="exportToCSV" />
       <BaseButton color="warning" small :icon="mdiFileExcel" title="Exportar a Excel" @click="exportToExcel" />
     </div>
   </div>
 
-  <!-- Users Table -->
   <div class="overflow-x-auto">
     <table class="w-full">
       <thead>
         <tr>
           <th />
           <th>ID</th>
-          <th>Username</th>
           <th>Nombre</th>
           <th>Apellido</th>
           <th>Correo</th>
-          <th>Acciones</th>
+          <th v-if="isSuperuser">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -375,11 +368,10 @@ const exportToExcel = () => {
             <UserAvatar :src="user.user_image" :username="user.username" class="w-24 h-24 mx-auto lg:w-6 lg:h-6" />
           </td>
           <td data-label="ID">{{ user.user_id }}</td>
-          <td data-label="Username">{{ user.username }}</td>
           <td data-label="Nombre">{{ user.first_name }}</td>
           <td data-label="Apellido">{{ user.last_name }}</td>
           <td data-label="Correo">{{ user.email }}</td>
-          <td class="whitespace-nowrap" data-label="Acciones">
+          <td v-if="isSuperuser" class="whitespace-nowrap" data-label="Acciones">
             <BaseButtons type="justify-start lg:justify-center" no-wrap>
               <BaseButton 
                 color="info" 
@@ -389,7 +381,6 @@ const exportToExcel = () => {
                 @click="openEdit(user)" 
               />
               <BaseButton 
-                v-if="isSuperuser"
                 color="danger"
                 :icon="mdiTrashCan"
                 small
