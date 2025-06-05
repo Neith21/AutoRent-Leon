@@ -1,27 +1,57 @@
-#Email
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from smtplib import SMTPResponseException, SMTPException
-
 import os
 from dotenv import load_dotenv
 
-def sendMail(html, asunto, para):
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = asunto
-    msg['From'] = os.getenv("SMTP_BY")
-    msg['To'] = para
+load_dotenv()
 
-    msg.attach(MIMEText(html, 'html'))
+def sendMail(html_content: str, subject: str, recipient_email: str):
+    smtp_server_host = os.getenv("SMTP_SERVER")
+    smtp_port_str = os.getenv("SMTP_PORT")
+    smtp_auth_user = os.getenv("SMTP_USER")
+    smtp_auth_password = os.getenv("SMTP_PASSWORD")
+    sender_email_address = os.getenv("SMTP_BY")
+
+    if not all([smtp_server_host, smtp_port_str, smtp_auth_user, smtp_auth_password, sender_email_address]):
+        raise Exception(
+            "Error de configuración: Faltan una o más variables de entorno SMTP. "
+            "Se requieren: SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_BY."
+        )
 
     try:
-        # Corrección: Debes crear un objeto servidor SMTP correcto
-        server = smtplib.SMTP(os.getenv("SMTP_SERVER"), os.getenv("SMTP_PORT"))
-        server.login(os.getenv("SMTP_USER"), os.getenv("SMTP_PASSWORD"))
-        server.sendmail(os.getenv("SMTP_USER"), para, msg.as_string())
-        server.quit()
-        return None  # Indica éxito
+        smtp_port = int(smtp_port_str)
+    except ValueError:
+        raise Exception(f"Error de configuración: El puerto SMTP '{smtp_port_str}' no es un número válido.")
+
+    message = MIMEMultipart('alternative')
+    message['Subject'] = subject
+    message['From'] = sender_email_address
+    message['To'] = recipient_email
+    message.attach(MIMEText(html_content, 'html', 'utf-8'))
+
+    smtp_connection = None
+    try:
+        if smtp_port == 465:
+            smtp_connection = smtplib.SMTP_SSL(smtp_server_host, smtp_port, timeout=10)
+        else:
+            smtp_connection = smtplib.SMTP(smtp_server_host, smtp_port, timeout=10)
+            smtp_connection.ehlo()
+            smtp_connection.starttls()
+            smtp_connection.ehlo()
+
+        smtp_connection.login(smtp_auth_user, smtp_auth_password)
+        smtp_connection.sendmail(sender_email_address, recipient_email, message.as_string())
+
     except Exception as e:
-        # En lugar de solo imprimir, lanza la excepción para que active el rollback
-        raise Exception(f"Error sending email: {str(e)}")
+        original_error_type = type(e).__name__
+        original_error_msg = str(e)
+        raise Exception(f"Error al intentar enviar el correo ({original_error_type}): {original_error_msg}")
+    finally:
+        if smtp_connection:
+            try:
+                smtp_connection.quit()
+            except Exception:
+                # Ignorar errores al intentar cerrar la conexión,
+                # ya que el error principal ya fue lanzado.
+                pass

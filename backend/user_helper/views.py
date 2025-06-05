@@ -16,36 +16,79 @@ import os
 from datetime import datetime
 from django.core.files.storage import FileSystemStorage
 
-from utilities.decorators import is_authenticated
 from user_helper.serializers import *
 from user_control.models import *
 from error_log.utils import log_error
 from utilities.decorators import authenticate_user
+import re
 
 from rest_framework import status as drf_status
+from django.db import transaction
 
 # Create your views here.
 
 
+def validate_required_fields(data, fields):
+    for field in fields:
+        value = data.get(field)
+        if value is None:
+            return JsonResponse({
+                "status": "error",
+                "message": f"El campo '{field}' es requerido."
+            }, status=HTTPStatus.BAD_REQUEST)
+        if isinstance(value, str) and not value.strip():
+            return JsonResponse({
+                "status": "error",
+                "message": f"El campo '{field}' no puede estar vacío."
+            }, status=HTTPStatus.BAD_REQUEST)
+    return None
+
+
+def validate_password_complexity(password):
+    if len(password) < 8:
+        return "La contraseña debe tener al menos 8 caracteres."
+    if not re.search(r"[A-Z]", password):
+        return "La contraseña debe contener al menos una letra mayúscula."
+    if not re.search(r"[a-z]", password):
+        return "La contraseña debe contener al menos una letra minúscula."
+    if not re.search(r"\d", password):
+        return "La contraseña debe contener al menos un número."
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+         return "La contraseña debe contener al menos un carácter especial."
+    return None
+
+
+def validate_name_format(field, field_name):
+    if not re.match(r"^[a-zA-ZÀ-ÿ\s'-]+$", field):
+        return f"El campo '{field_name}' contiene caracteres no válidos. Solo se permiten letras y espacios."
+    return None
+
+
 class UserR(APIView):
     
-    @is_authenticated()
+    @authenticate_user()
     def get(self, request):
-        # El usuario ya está autenticado y tiene los permisos necesarios en este punto
-        data = UsersMetadata.objects.filter(
-            user__is_active=True
-        ).order_by('id')
-        datos_json = UserHelperSerializer(data, many=True)
-        return JsonResponse({
-            "data": datos_json.data
-        }, status=HTTPStatus.OK)
+        try:
+            # El usuario ya está autenticado y tiene los permisos necesarios en este punto
+            data = UsersMetadata.objects.filter(
+                user__is_active=True
+            ).order_by('id')
+            datos_json = UserHelperSerializer(data, many=True)
+            return JsonResponse({
+                "data": datos_json.data
+            }, status=HTTPStatus.OK)
+        except Exception as e:
+            return JsonResponse(
+                {"status": "error", "message": f"Ocurrió un error al procesar la solicitud. {e}"},
+                status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
 
 
 class UserRU(APIView):
     
     #Este metodo no es para devolver un registro en base a su id, sino en base a un id foraneo contenido en ella, es distinta al tradicional
-    @is_authenticated()
+    @authenticate_user()
     def get(self, request, id):
         try:
             user = User.objects.filter(pk=id).get()
@@ -60,59 +103,113 @@ class UserRU(APIView):
             log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
-                "message": "Resource not found"
+                "message": "Recurso no encontrado"
             }, status=HTTPStatus.NOT_FOUND)
 
 
-    @is_authenticated()
+    @authenticate_user()
     def put(self, request, id):
         try:
-            user = User.objects.get(pk=id)
+            user_to_update = User.objects.get(pk=id)
         except User.DoesNotExist:
             return JsonResponse({
                 "status": "error",
-                "message": "User not found"
+                "message": "Usuario no encontrado."
             }, status=HTTPStatus.NOT_FOUND)
+        
+        data = request.data
+        update_fields_dict = {}
+        validation_errors = {}
 
-        try:
-            update_data = {}
-            if "username" in request.data:
-                update_data["username"] = request.data["username"]
-            if "first_name" in request.data:
-                update_data["first_name"] = request.data["first_name"]
-            if "last_name" in request.data:
-                update_data["last_name"] = request.data["last_name"]
-            if "email" in request.data:
-                update_data["email"] = request.data["email"]
-
-            if update_data:
-                User.objects.filter(pk=id).update(**update_data)
-                return JsonResponse({
-                    "status": "ok",
-                    "message": "User successfully updated"
-                }, status=HTTPStatus.OK)
+        if "first_name" in data:
+            first_name = data["first_name"].strip()
+            if not first_name:
+                validation_errors["first_name"] = "El nombre no puede estar vacío."
             else:
-                return JsonResponse({
-                    "status": "error",
-                    "message": "No valid fields provided"
-                }, status=HTTPStatus.BAD_REQUEST)
+                name_error = validate_name_format(first_name, "nombre")
+                if name_error:
+                    validation_errors["first_name"] = name_error
+                else:
+                    update_fields_dict["first_name"] = first_name
 
-        except Exception as e:
+        if "last_name" in data:
+            last_name = data["last_name"].strip()
+            if last_name:
+                name_error = validate_name_format(last_name, "apellido")
+                if name_error:
+                    validation_errors["last_name"] = name_error
+                else:
+                    update_fields_dict["last_name"] = last_name
+            else:
+                update_fields_dict["last_name"] = "" 
+
+        if "username" in data:
+            username = data["username"].strip()
+            if not username:
+                validation_errors["username"] = "El nombre de usuario no puede estar vacío."
+            elif User.objects.filter(username=username).exclude(pk=user_to_update.id).exists():
+                validation_errors["username"] = f"El nombre de usuario '{username}' ya está en uso."
+            else:
+                update_fields_dict["username"] = username
+
+        if "email" in data:
+            email = data["email"].strip().lower()
+            if not email:
+                validation_errors["email"] = "El correo electrónico no puede estar vacío."
+            else:
+                try:
+                    from django.core.validators import validate_email
+                    validate_email(email)
+                    if User.objects.filter(email=email).exclude(pk=user_to_update.id).exists():
+                        validation_errors["email"] = f"El correo electrónico '{email}' ya está en uso."
+                    else:
+                        update_fields_dict["email"] = email
+                except Exception:
+                    validation_errors["email"] = "El formato del correo electrónico no es válido."
+
+        if validation_errors:
             return JsonResponse({
                 "status": "error",
-                "message": "Unexpected error occurred"
+                "message": "Error de validación.",
+                "errors": validation_errors
+            }, status=HTTPStatus.BAD_REQUEST)
+
+        if not update_fields_dict:
+            return JsonResponse({
+                "status": "info",
+                "message": "No se proporcionaron campos válidos para actualizar."
+            }, status=HTTPStatus.OK)
+
+        try:
+            with transaction.atomic():
+                for field, value in update_fields_dict.items():
+                    setattr(user_to_update, field, value)
+                user_to_update.save(update_fields=update_fields_dict.keys())
+
+                update_change_reason(user_to_update, f"Perfil actualizado por el usuario: {request.user.username}")
+
+            return JsonResponse({
+                "status": "ok",
+                "message": "Perfil actualizado exitosamente."
+            }, status=HTTPStatus.OK)
+
+        except Exception as e:
+            log_error(user=request.user, exception=e, additional_info=f"Error al actualizar perfil ID: {id}")
+            return JsonResponse({
+                "status": "error",
+                "message": f"Ocurrió un error inesperado al actualizar el perfil: {str(e)}"
             }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
     
 
 class EditImage(APIView):
     
-    @is_authenticated()
+    @authenticate_user()
     def post(self, request):
         # Validate required fields
         required_fields = ["id"]
         error = validate_required_fields(request.data, required_fields)
         if error:
-            log_error(user=request.user, exception=Exception("All fields are required"))
+            log_error(user=request.user, exception=Exception("Todos los campos son obligatorios"))
             return error
 
         try:
@@ -121,7 +218,7 @@ class EditImage(APIView):
         except UsersMetadata.DoesNotExist:
             return JsonResponse({
                 "status": "error",
-                "message": "User metadata not found"
+                "message": "No se encontraron metadatos del usuario"
             }, status=HTTPStatus.BAD_REQUEST)
 
         fs = FileSystemStorage()
@@ -131,7 +228,7 @@ class EditImage(APIView):
         except Exception:
             return JsonResponse({
                 "status": "error",
-                "message": "An image file must be attached"
+                "message": "Se debe adjuntar un archivo de imagen"
             }, status=HTTPStatus.BAD_REQUEST)
 
         if request.FILES["user_image"].content_type in ["image/jpeg", "image/png"]:
@@ -141,7 +238,7 @@ class EditImage(APIView):
             except Exception:
                 return JsonResponse({
                     "status": "error",
-                    "message": "Failed to upload the image"
+                    "message": "No se pudo cargar la imagen"
                 }, status=HTTPStatus.BAD_REQUEST)
 
             try:
@@ -153,7 +250,7 @@ class EditImage(APIView):
 
                 return JsonResponse({
                     "status": "ok",
-                    "message": "Image successfully updated"
+                    "message": "Imagen actualizada exitosamente"
                 }, status=HTTPStatus.OK)
             except Exception:
                 raise Http404
@@ -161,13 +258,13 @@ class EditImage(APIView):
         else:
             return JsonResponse({
                 "status": "error",
-                "message": "user_image must be PNG or JPEG"
+                "message": "La imagen del usuario debe ser PNG o JPEG"
             }, status=HTTPStatus.BAD_REQUEST)
         
 
 class UserD(APIView):
 
-    @is_authenticated()
+    @authenticate_user(required_permission='user.delete_user')
     def put(self, request, id):
         try:
             user = User.objects.get(pk=id)
@@ -175,7 +272,7 @@ class UserD(APIView):
             log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
-                "message": "User not found"
+                "message": "Usuario no encontrado"
             }, status=HTTPStatus.NOT_FOUND)
 
         try:
@@ -187,78 +284,85 @@ class UserD(APIView):
 
             return JsonResponse({
                 "status": "ok",
-                "message": "User successfully deactivated"
+                "message": "Usuario desactivada con éxito"
             }, status=HTTPStatus.OK)
 
         except Exception as e:
             log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
-                "message": "Unexpected error occurred"
+                "message": "Se produjo un error inesperado"
             }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
         
 
 class EditPassword(APIView):
 
-    @is_authenticated()
+    @authenticate_user()
     def post(self, request):
-        # Validate required fields
-        required_fields = ["id", "current_password", "new_password", "confirm_password"]
-        error = validate_required_fields(request.data, required_fields)
-        if error:
-            log_error(user=request.user, exception=Exception("All fields are required"))
-            return error
-        
-        # Extract data from request
-        user_id = request.data.get("id")
-        email = request.data.get("email")
-        current_password = request.data.get("current_password")
-        new_password = request.data.get("new_password")
-        confirm_password = request.data.get("confirm_password")
-        
-        # Validate new password matches confirmation
+        user_to_update = request.user
+        data = request.data
+
+        required_fields = ["current_password", "new_password", "confirm_password"]
+        error_response = validate_required_fields(data, required_fields)
+        if error_response:
+            return error_response
+
+        current_password = data.get("current_password")
+        new_password = data.get("new_password")
+        confirm_password = data.get("confirm_password")
+
+        # Verificar contraseña actual
+        if not user_to_update.check_password(current_password):
+            return JsonResponse({
+                "status": "error",
+                "message": "La contraseña actual no es correcta."
+            }, status=HTTPStatus.BAD_REQUEST)
+
+        # Verificar que la nueva contraseña y la confirmación coincidan
         if new_password != confirm_password:
             return JsonResponse({
                 "status": "error",
-                "message": "New password and confirmation do not match"
+                "message": "La nueva contraseña y la confirmación no coinciden."
             }, status=HTTPStatus.BAD_REQUEST)
         
+        # Verificar que la nueva contraseña no sea igual a la actual
+        if user_to_update.check_password(new_password):
+            return JsonResponse({
+                "status": "error",
+                "message": "La nueva contraseña no puede ser igual a la contraseña actual."
+            }, status=HTTPStatus.BAD_REQUEST)
+
+        # Validar complejidad de la nueva contraseña
+        password_complexity_error = validate_password_complexity(new_password)
+        if password_complexity_error:
+            return JsonResponse({
+                "status": "error",
+                "message": password_complexity_error
+            }, status=HTTPStatus.BAD_REQUEST)
+
         try:
-            # Get the user
-            user = User.objects.filter(pk=user_id).get()
-            
-            auth = authenticate(request, username=email, password=current_password)
-            if auth is not None:
-                # Set new password
-                user.set_password(new_password)
-                user.save()
-                
-                return JsonResponse({
-                    "status": "success",
-                    "message": "Password updated successfully"
-                }, status=HTTPStatus.OK)
-        
+            with transaction.atomic():
+                user_to_update.set_password(new_password)
+                user_to_update.save()
+
+                update_change_reason(user_to_update, "Contraseña cambiada por el usuario.")
+
             return JsonResponse({
-                    "status": "error",
-                    "message": "Current password is incorrect"
-                }, status=HTTPStatus.BAD_REQUEST)
-            
-        except User.DoesNotExist:
-            return JsonResponse({
-                "status": "error",
-                "message": "User not found"
-            }, status=HTTPStatus.BAD_REQUEST)
+                "status": "ok",
+                "message": "Contraseña actualizada exitosamente."
+            }, status=HTTPStatus.OK)
+
         except Exception as e:
-            log_error(user=request.user, exception=e)
+            log_error(user=request.user, exception=e, additional_info="Error al cambiar contraseña")
             return JsonResponse({
                 "status": "error",
-                "message": "An error occurred while updating the password"
+                "message": f"Ocurrió un error inesperado al cambiar la contraseña: {str(e)}"
             }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
         
 
 class UserPermissionsView(APIView):
 
-    @is_authenticated()
+    @authenticate_user()
     def get(self, request):
         auth_header = request.headers.get('Authorization')
 
@@ -294,19 +398,3 @@ class UserPermissionsView(APIView):
             permissions_list = sorted(list(user_permissions_set))
             
             return JsonResponse({"permissions": permissions_list}, status=drf_status.HTTP_200_OK)
-
-
-def validate_required_fields(data, fields):
-    for field in fields:
-        value = data.get(field)
-        if value is None:
-            return JsonResponse({
-                "status": "error",
-                "message": f"The field '{field}' is required"
-            }, status=HTTPStatus.BAD_REQUEST)
-        if not str(value).strip():
-            return JsonResponse({
-                "status": "error",
-                "message": f"The field '{field}' cannot be empty"
-            }, status=HTTPStatus.BAD_REQUEST)
-    return None

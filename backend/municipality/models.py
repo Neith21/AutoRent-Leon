@@ -4,12 +4,18 @@ from department.models import Department
 
 # Create your models here.
 
-
 class Municipality(models.Model):
-    code = models.IntegerField(
-        unique=True, # El código de municipio es único
+    code = models.CharField(
+        max_length=8,         # Máximo 8 números
+        unique=True,
         verbose_name="código de municipio",
-        help_text="Código numérico único para el municipio.",
+        help_text="Código numérico único de hasta 8 dígitos para el municipio.",
+        validators=[
+            RegexValidator(
+                regex=r'^[0-9]+$', # Solo números
+                message="El código de municipio solo puede contener números."
+            )
+        ],
         error_messages={
             'unique': "Ya existe un municipio con este código."
         }
@@ -42,15 +48,16 @@ class Municipality(models.Model):
     )
     
     active = models.BooleanField(default=True, verbose_name="activo")
-    created_by = models.IntegerField(null=True, blank=True, verbose_name="creado por")
+    created_by = models.IntegerField(null=True, blank=True, verbose_name="ID del creador")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="fecha de creación")
-    modified_by = models.IntegerField(null=True, blank=True, verbose_name="modificado por")
+    modified_by = models.IntegerField(null=True, blank=True, verbose_name="ID del modificador")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="última modificación")
 
     def __str__(self):
-        return f"{self.municipality} (Dep: {self.department.department})"
+        return f"{self.municipality} (Dep: {self.department.department if self.department else 'N/A'})"
 
     class Meta:
         db_table = 'municipality'
         verbose_name = 'Municipio'
         verbose_name_plural = 'Municipios'
+        ordering = ['department', 'municipality']

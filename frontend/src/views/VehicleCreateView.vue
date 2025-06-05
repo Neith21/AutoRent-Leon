@@ -36,15 +36,17 @@ const vehicleCategories = ref([]);
 const engineTypeOptions = ref([
   { id: 'Gasolina', label: 'Gasolina' },
   { id: 'Diesel', label: 'Diesel' },
-  { id: 'Eléctrico', label: 'Eléctrico' },
-  { id: 'Híbrido', label: 'Híbrido' }
+  { id: 'Electrico', label: 'Eléctrico' },
+  { id: 'Hibrido', label: 'Híbrido' },
+  { id: 'GLP', label: 'GLP' },
 ]);
 
 const statusOptions = ref([
-  { id: 'Disponible', label: 'Disponible' },
-  { id: 'Alquilado', label: 'Alquilado' },
-  { id: 'Mantenimiento', label: 'Mantenimiento' },
-  { id: 'Fuera de servicio', label: 'Fuera de servicio' }
+  { id: 'Disponible', label: 'Disponible' }, 
+  { id: 'En mantenimiento', label: 'En mantenimiento' },
+  { id: 'En reparacion', label: 'En reparación' },
+  { id: 'Reservado', label: 'Reservado' },
+  { id: 'Alquilado', label: 'Alquilado' }
 ]);
 
 const form = ref({

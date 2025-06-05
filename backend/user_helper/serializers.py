@@ -3,6 +3,15 @@ from user_control.models import UsersMetadata
 from dotenv import load_dotenv
 import os
 
+
+def get_base_url():
+        base_url = os.getenv("BASE_URL", "http://127.0.0.1:8000")
+        port = os.getenv("BASE_URL_BACKEND_PORT")
+        if port:
+            return f"{base_url}:{port}"
+        return base_url
+
+
 class UserHelperSerializer(serializers.ModelSerializer):
     
     username = serializers.CharField(source='user.username')
@@ -16,4 +25,5 @@ class UserHelperSerializer(serializers.ModelSerializer):
         fields = ("user_id", "username", "first_name", "last_name", "email", "user_image")
 
     def get_user_image(self, obj):
-        return f"{os.getenv('BASE_URL')}:{os.getenv('BASE_URL_BACKEND_PORT')}/uploads/user/{obj.user_image}"
+        base_url = get_base_url()
+        return f"{base_url}/uploads/user/{obj.user_image}"

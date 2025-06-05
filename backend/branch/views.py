@@ -1,65 +1,44 @@
 from rest_framework.views import APIView
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse
 from http import HTTPStatus
-
-from branch.models import Branch
-from branch.serializers import BranchSerializer
-from utilities.decorators import authenticate_user
-
-from branch.forms import BranchForm
-from django.conf import settings
-from jose import jwt
 from django.db import transaction
-from django.core.exceptions import ValidationError
+
+from .models import Branch
 from district.models import District
-from django.contrib.auth.models import User
 from municipality.models import Municipality
+from .serializers import BranchSerializer
+from .forms import BranchForm
+from utilities.decorators import authenticate_user
+from django.core.exceptions import ValidationError
+
+import json
 
 # Create your views here.
 
-def get_user_id_from_request(request):
-    auth_header = request.headers.get("Authorization", "").split()
-    token_value = auth_header[1] if len(auth_header) == 2 else None
-    if not token_value:
-        return None, JsonResponse(
-            {"status": "error", "message": "Token no proporcionado."},
-            status=HTTPStatus.UNAUTHORIZED
-        )
-    try:
-        decoded = jwt.decode(token_value, settings.SECRET_KEY, algorithms=["HS512"])
-        user_id = decoded.get("id")
-        if not user_id:
-            return None, JsonResponse(
-                {"status": "error", "message": "ID de usuario no encontrado en el token."},
-                status=HTTPStatus.UNAUTHORIZED
-            )
-        return user_id, None
-    except Exception:
-        return None, JsonResponse(
-            {"status": "error", "message": "Token inválido o expirado."},
-            status=HTTPStatus.UNAUTHORIZED
-        )
-
 class BranchRC(APIView):
 
-    @authenticate_user(required_permission='view_branch')
+    @authenticate_user(required_permission='branch.view_branch')
     def get(self, request):
-        data = Branch.objects.select_related(
-            'district', 
-            'district__municipality', 
-            'district__municipality__department'
-        ).filter(active=True).order_by('id')
-        serializer = BranchSerializer(data, many=True)
-        return JsonResponse({
-            "data": serializer.data
-        }, status=HTTPStatus.OK)
+        try:
+            data = Branch.objects.select_related(
+                'district', 
+                'district__municipality', 
+                'district__municipality__department'
+            ).filter(active=True).order_by('id')
+            serializer = BranchSerializer(data, many=True)
+            return JsonResponse({
+                "data": serializer.data
+            }, status=HTTPStatus.OK)
+        except Exception as e:
+            return JsonResponse(
+                {"status": "error", "message": f"Ocurrió un error al procesar la solicitud. {e}"},
+                status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
-    @authenticate_user(required_permission='add_branch')
+    @authenticate_user(required_permission='branch.add_branch')
     @transaction.atomic
     def post(self, request):
-        user_id, error_response = get_user_id_from_request(request)
-        if error_response:
-            return error_response
+        user_id = request.user.id
 
         data_for_form = {}
         if hasattr(request, 'data') and isinstance(request.data, dict):
@@ -110,7 +89,7 @@ class BranchRC(APIView):
 
 class BranchRU(APIView):
 
-    @authenticate_user(required_permission='view_branch')
+    @authenticate_user(required_permission='branch.view_branch')
     def get(self, request, id):
         try:
             branch = Branch.objects.select_related(
@@ -177,12 +156,10 @@ class BranchRU(APIView):
             }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
         
 
-    @authenticate_user(required_permission='change_branch')
+    @authenticate_user(required_permission='branch.change_branch')
     @transaction.atomic
     def put(self, request, id):
-        user_id, error_response = get_user_id_from_request(request)
-        if error_response:
-            return error_response
+        user_id = request.user.id
 
         try:
             branch_instance = Branch.objects.get(pk=id)
@@ -280,12 +257,10 @@ class BranchRU(APIView):
 
 class BranchD(APIView):
 
-    @authenticate_user(required_permission='change_branch')
+    @authenticate_user(required_permission='branch.delete_branch')
     @transaction.atomic
     def put(self, request, id):
-        user_id, error_response = get_user_id_from_request(request)
-        if error_response:
-            return error_response
+        user_id = request.user.id
 
         try:
             branch = Branch.objects.get(pk=id)
@@ -310,18 +285,18 @@ class BranchD(APIView):
                 "status": "error",
                 "message": f"Error inesperado al desactivar la sucursal: {str(e)}"
             }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
-        
+    
 
 class MunicipalitiesByDepartmentR(APIView):
 
-    @authenticate_user(required_permission='view_municipality')
+    @authenticate_user(required_permission='branch.view_municipality')
     def get(self, request, id):
         try:
             dept_id = int(id)
         except ValueError:
             return JsonResponse({
                 "status": "error",
-                "message": "Invalid department ID format."
+                "message": "Formato de ID de departamento inválido."
             }, status=HTTPStatus.BAD_REQUEST)
 
         municipalities = Municipality.objects.filter(department_id=dept_id, active=True).order_by('code')
@@ -329,7 +304,7 @@ class MunicipalitiesByDepartmentR(APIView):
         if not municipalities.exists():
             return JsonResponse({
                 "status": "error",
-                "message": "No municipalities found for this department or department does not exist."
+                "message": "No se encontraron municipios para este departamento o el departamento no existe."
             }, status=HTTPStatus.NOT_FOUND)
 
         data = [
@@ -345,14 +320,14 @@ class MunicipalitiesByDepartmentR(APIView):
 
 class DistrictsByMunicipalityR(APIView):
 
-    @authenticate_user(required_permission='view_district')
+    @authenticate_user(required_permission='branch.view_district')
     def get(self, request, id):
         try:
             mun_id = int(id)
         except ValueError:
             return JsonResponse({
                 "status": "error",
-                "message": "Invalid municipality ID format."
+                "message": "Formato de ID de municipio inválido"
             }, status=HTTPStatus.BAD_REQUEST)
 
         districts = District.objects.filter(municipality_id=mun_id, active=True).order_by('code')
@@ -360,7 +335,7 @@ class DistrictsByMunicipalityR(APIView):
         if not districts.exists():
             return JsonResponse({
                 "status": "error",
-                "message": "No districts found for this municipality or municipality does not exist."
+                "message": "No se encontraron distritos para este municipio o el municipio no existe."
             }, status=HTTPStatus.NOT_FOUND)
 
         data = [

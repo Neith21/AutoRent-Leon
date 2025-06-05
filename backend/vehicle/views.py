@@ -1,103 +1,75 @@
 from rest_framework.views import APIView
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse
 from http import HTTPStatus
 from django.utils.timezone import now
 
 from vehicle.models import Vehicle
 from vehiclemodel.models import VehicleModel
-from vehiclecategory.models import VehicleCategory
 from vehicleimage.models import VehicleImage
 from vehicle.serializers import VehicleSerializer
 from utilities.decorators import authenticate_user
-from jose import jwt
+
 from django.core.files.storage import FileSystemStorage
-from django.conf import settings
 import os
 from datetime import datetime
-from vehiclemodel.models import VehicleModel
 
 from .forms import VehicleForm
-from django.utils.timezone import now as django_now
 from django.db import transaction
 from django.core.files.uploadedfile import UploadedFile
 from django.core.exceptions import ValidationError
+import json # Para parsear JSON body
 
-# Create your views here.
+
+def get_base_url():
+    base_url = os.getenv("BASE_URL", "http://127.0.0.1:8000")
+    port = os.getenv("BASE_URL_BACKEND_PORT")
+    if port:
+        return f"{base_url}:{port}"
+    return base_url
+
 
 class VehicleRC(APIView):
-    
-
-    @authenticate_user(required_permission='view_vehicle')
+    @authenticate_user(required_permission='vehicle.view_vehicle')
     def get(self, request):
-
-
-        # El usuario ya está autenticado y tiene los permisos necesarios en este punto
-        data = Vehicle.objects.filter(active=True).order_by('id')
-        datos_json = VehicleSerializer(data, many=True)
-        return JsonResponse({
-            "data": datos_json.data
-        }, status=HTTPStatus.OK)
+        try:
+            data = Vehicle.objects.filter(active=True).order_by('id')
+            serializer = VehicleSerializer(data, many=True)
+            return JsonResponse({
+                "data": serializer.data
+            }, status=HTTPStatus.OK)
+        except Exception as e:
+            return JsonResponse(
+                {"status": "error", "message": f"Ocurrió un error al procesar la solicitud. {e}"},
+                status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
     
-    
-    @authenticate_user(required_permission='add_vehicle')
+    @authenticate_user(required_permission='vehicle.add_vehicle')
     @transaction.atomic
     def post(self, request):
-        auth_header = request.headers.get("Authorization","").split()
-        token_value = auth_header[1] if len(auth_header) == 2 else None
-        user_id = None
-        if token_value:
-            try:
-                decoded = jwt.decode(token_value, settings.SECRET_KEY, algorithms=["HS512"])
-                user_id = decoded.get("id")
-            except Exception:
-                return JsonResponse(
-                    {"estado": "error", "mensaje": "Token inválido o expirado."},
-                    status=HTTPStatus.UNAUTHORIZED
-                )
-        else:
-            return JsonResponse(
-                {"estado": "error", "mensaje": "Token no proporcionado."},
-                status=HTTPStatus.UNAUTHORIZED
-            )
-        if not user_id:
-             return JsonResponse(
-                {"estado": "error", "mensaje": "ID de usuario no encontrado en el token."},
-                status=HTTPStatus.UNAUTHORIZED
-            )
-        
+        user_id = request.user.id
+
         data_for_form = {}
-        if hasattr(request, 'data'):
+        if hasattr(request, 'data') and isinstance(request.data, dict):
             for key, value in request.data.items():
                 if not isinstance(value, UploadedFile) and \
                    not (isinstance(value, list) and value and isinstance(value[0], UploadedFile)):
                     data_for_form[key] = value
         else:
-            if request.POST:
-                data_for_form = request.POST.copy()
-            else:
-                import json
-                try:
-                    body_data = json.loads(request.body)
-                    if isinstance(body_data, dict):
-                        data_for_form = body_data
-                    else:
-                        raise ValueError("El cuerpo JSON debe ser un objeto.")
-                except (json.JSONDecodeError, ValueError) as e:
-                    return JsonResponse({"estado": "error", "mensaje": f"Cuerpo de la solicitud inválido: {e}"}, status=HTTPStatus.BAD_REQUEST)
-
-        # required_fields = [
-        #     "plate", "vehiclemodel_id", "vehiclecategory_id",
-        #     "color", "year", "engine_type", # "engine" es blank=True, "description" no está
-        #     "engine_number", "vin", "seat_count", "status"
-        # ]
-        # error_validation = validate_required_fields(data_for_form, required_fields)
-        # if error_validation:
-        #     return error_validation # Asumo que devuelve un JsonResponse
+            try:
+                body_data = json.loads(request.body)
+                if isinstance(body_data, dict):
+                    data_for_form = body_data
+                else:
+                    raise ValueError("El cuerpo JSON debe ser un objeto.")
+            except (json.JSONDecodeError, ValueError) as e:
+                return JsonResponse({"status": "error", "message": f"Cuerpo de la solicitud inválido: {e}"}, status=HTTPStatus.BAD_REQUEST)
 
         if "vehiclemodel_id" in data_for_form:
             data_for_form['vehiclemodel'] = data_for_form.pop("vehiclemodel_id")
         if "vehiclecategory_id" in data_for_form:
             data_for_form['vehiclecategory'] = data_for_form.pop("vehiclecategory_id")
+        if "branch_id" in data_for_form:
+            data_for_form['branch'] = data_for_form.pop("branch_id")
 
         form = VehicleForm(data_for_form, request.FILES)
 
@@ -163,15 +135,14 @@ class VehicleRC(APIView):
     
 
 class VehicleRU(APIView):
-
-
-    @authenticate_user(required_permission='view_vehicle')
+    @authenticate_user(required_permission='vehicle.view_vehicle')
     def get(self, request, id):
         try:
             vehicle = Vehicle.objects.select_related(
                 'vehiclemodel', 
                 'vehiclemodel__brand',
-                'vehiclecategory'
+                'vehiclecategory',
+                'branch'
             ).get(pk=id, active=True)
 
             vehicle_data = {
@@ -210,14 +181,22 @@ class VehicleRU(APIView):
                 }
             else:
                 vehicle_data["vehiclecategory"] = None
+
+            if vehicle.branch:
+                vehicle_data["branch"] = {
+                    "id": vehicle.branch.id,
+                    "name": vehicle.branch.name,
+                }
+            else:
+                vehicle_data["branch"] = None
             
-            base_url_images = f"{os.getenv('BASE_URL')}:{os.getenv('BASE_URL_BACKEND_PORT')}/uploads/vehicle/"
+            base_media_url = f"{get_base_url()}/uploads/vehicle/"
             images_data_list = []
             if hasattr(vehicle, 'images') and vehicle.images.exists():
                 for img_instance in vehicle.images.all():
                     images_data_list.append({
                         "id": img_instance.id,
-                        "url": f"{base_url_images}{img_instance.vehicle_image}"
+                        "url": f"{base_media_url}{img_instance.vehicle_image}"
                     })
             vehicle_data["images"] = images_data_list
             
@@ -239,12 +218,14 @@ class VehicleRU(APIView):
             return JsonResponse({
                 "status": "error",
                 "message": f"Error inesperado procesando la solicitud: {e}"
-            }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            }, status=HTTPStatus.INTERNAL_SERVER_ERROR)   
         
 
-    @authenticate_user(required_permission='change_vehicle')
+    @authenticate_user(required_permission='vehicle.change_vehicle')
     @transaction.atomic
     def put(self, request, id):
+        user_id = request.user.id
+
         try:
             vehicle = Vehicle.objects.get(pk=id)
         except Vehicle.DoesNotExist:
@@ -253,29 +234,6 @@ class VehicleRU(APIView):
                 status=HTTPStatus.NOT_FOUND
             )
         
-        auth_header = request.headers.get("Authorization","").split()
-        token_value = auth_header[1] if len(auth_header) == 2 else None
-        user_id = None
-        if token_value:
-            try:
-                decoded = jwt.decode(token_value, settings.SECRET_KEY, algorithms=["HS512"])
-                user_id = decoded.get("id")
-            except Exception:
-                return JsonResponse(
-                    {"estado": "error", "mensaje": "Token inválido o expirado."},
-                    status=HTTPStatus.UNAUTHORIZED
-                )
-        else:
-            return JsonResponse(
-                {"estado": "error", "mensaje": "Token no proporcionado."},
-                status=HTTPStatus.UNAUTHORIZED
-            )
-        if not user_id:
-             return JsonResponse(
-                {"estado": "error", "mensaje": "ID de usuario no encontrado en el token."},
-                status=HTTPStatus.UNAUTHORIZED
-            )
-
         if not hasattr(request, 'data') or not isinstance(request.data, dict):
             import json
             try:
@@ -294,7 +252,7 @@ class VehicleRU(APIView):
             )
 
         updatable_fields = [
-            'plate', 'vehiclemodel_id', 'vehiclecategory_id', 'color', 'year',
+            'plate', 'vehiclemodel_id', 'vehiclecategory_id', 'branch_id' 'color', 'year',
             'engine', 'engine_type', 'engine_number', 'vin',
             'seat_count', 'description', 'status'
         ]
@@ -328,6 +286,8 @@ class VehicleRU(APIView):
                 setattr(vehicle, 'vehiclemodel_id', value)
             elif field_name == 'vehiclecategory_id':
                 setattr(vehicle, 'vehiclecategory_id', value)
+            elif field_name == 'branch_id':
+                setattr(vehicle, 'branch_id', value)
             else:
                 setattr(vehicle, field_name, value)
         
@@ -355,11 +315,10 @@ class VehicleRU(APIView):
             )
 
 class VehicleD(APIView):
-    
-    
-    @authenticate_user(required_permission='change_vehicle')
+    @authenticate_user(required_permission='vehicle.delete_vehicle')
+    @transaction.atomic
     def put(self, request, id):
-
+        user_id = request.user.id
 
         try:
             vehicle = Vehicle.objects.get(pk=id)
@@ -368,19 +327,8 @@ class VehicleD(APIView):
                 "status": "error",
                 "message": "Vehículo no encontrado"
             }, status=HTTPStatus.NOT_FOUND)
-        
-        try:
-            auth_header = request.headers.get("Authorization","").split()
-            token = auth_header[1] if len(auth_header)==2 else None
-            try:
-                decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS512"])
-                user_id = decoded.get("id")
-            except Exception:
-                return JsonResponse(
-                    {"estado": "error", "mensaje": "Token inválido"},
-                    status=HTTPStatus.UNAUTHORIZED
-                )
             
+        try:
             Vehicle.objects.filter(pk=id).update(
                 active=False,
                 modified_by=user_id,
@@ -397,12 +345,11 @@ class VehicleD(APIView):
                 "status": "error",
                 "message": f"Error inesperado: {str(e)}"
             }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
-        
 
 
 class ModelsByBrandR(APIView):
 
-    @authenticate_user(required_permission='view_brand')
+    @authenticate_user(required_permission='vehicle.view_brand')
     def get(self, request, id):
         vehicle_models = VehicleModel.objects.filter(brand_id=id, active=True)
 
@@ -421,20 +368,3 @@ class ModelsByBrandR(APIView):
             {"data": data},
             status=HTTPStatus.OK
         )
-
-
-
-def validate_required_fields(data, fields):
-    for field in fields:
-        value = data.get(field)
-        if value is None:
-            return JsonResponse({
-                "status": "error",
-                "message": f"The field '{field}' is required"
-            }, status=HTTPStatus.BAD_REQUEST)
-        if not str(value).strip():
-            return JsonResponse({
-                "status": "error",
-                "message": f"The field '{field}' cannot be empty"
-            }, status=HTTPStatus.BAD_REQUEST)
-    return None

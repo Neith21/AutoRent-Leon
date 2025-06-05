@@ -3,41 +3,65 @@ import {
   mdiMonitor,
   mdiSquareEditOutline,
   mdiTable,
+  mdiCarBack,
+  mdiDomain,
+  mdiSourceBranch,
+  mdiAccountGroup,
+  mdiAccountGroupOutline,
+  mdiCarInfo
 } from '@mdi/js'
 
 export default [
   {
     to: '/',
     icon: mdiMonitor,
-    label: 'Dashboard',
+    label: 'Panel',
   },
   {
-    label: 'Tables',
-    icon: mdiTable,
+    label: 'Usuarios',
+    icon: mdiAccountGroup,
     menu: [
       {
         to: '/tables',
-        label: 'Users',
-        icon: mdiAccountCircle,
+        label: 'Usuarios',
+        icon: mdiAccountGroupOutline, 
         requiredPermission: 'user.view_user'
-      },
+      }
+    ]
+  },
+  {
+    label: 'Administración',
+    icon: mdiDomain,
+    menu: [
       {
         to: '/branches',
-        label: 'Branches',
-        icon: mdiAccountCircle,
+        label: 'Sucursales',
+        icon: mdiSourceBranch,
         requiredPermission: 'branch.view_branch'
+      }
+    ]
+  },
+  {
+    label: 'Vehículos',
+    icon: mdiCarBack,
+    menu: [
+      {
+        to: '/vehiclemodels',
+        label: 'Modelos',
+        icon: mdiCarInfo,
+        requiredPermission: 'vehiclemodel.view_vehiclemodel'
       },
       {
         to: '/vehicles',
-        label: 'Vehicles',
-        icon: mdiAccountCircle,
+        label: 'Vehículos',
+        icon: mdiCarBack,
         requiredPermission: 'vehicle.view_vehicle'
       }
     ]
   },
   {
     to: '/profile',
-    label: 'Profile',
+    label: 'Pefil',
     icon: mdiAccountCircle,
   }
 ]

@@ -18,13 +18,21 @@ from vehiclemodel.models import VehicleModel
 
 # Create your views here.
 
-BASE_IMAGE_URL = f"{os.getenv('BASE_URL')}:{os.getenv('BASE_URL_BACKEND_PORT')}/uploads/vehicle/"
+def get_base_url():
+        base_url = os.getenv("BASE_URL", "http://127.0.0.1:8000")
+        port = os.getenv("BASE_URL_BACKEND_PORT")
+        if port:
+            return f"{base_url}:{port}"
+        return base_url
+
+BASE = get_base_url()
+BASE_IMAGE_URL = f"{BASE}/uploads/vehicle/"
 MAX_IMAGES_PER_VEHICLE = 6
 
 class VehicleImageCD(APIView):
     
     
-    @authenticate_user(required_permission='change_vehicle')
+    @authenticate_user(required_permission='vehicle.change_vehicle')
     def post(self, request, id):
         try:
             vehicle = Vehicle.objects.get(pk=id, active=True)
@@ -101,7 +109,7 @@ class VehicleImageCD(APIView):
             "added_images": added_images_data
         }, status=HTTPStatus.CREATED)
 
-    @authenticate_user(required_permission='change_vehicle')
+    @authenticate_user(required_permission='vehicle.delete_vehicle')
     def delete(self, request, id):
         try:
             vehicle_image_instance = VehicleImage.objects.get(pk=id)

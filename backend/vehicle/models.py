@@ -5,6 +5,7 @@ from django.core.validators import (
 from django.utils import timezone
 from vehiclemodel.models import VehicleModel
 from vehiclecategory.models import VehicleCategory
+from branch.models import Branch
 
 def get_next_year():
     return timezone.now().year + 1
@@ -44,6 +45,18 @@ class Vehicle(models.Model):
         error_messages={
             'required': "Debe seleccionar una categoría de vehículo.",
             'invalid_choice': "La categoría de vehículo seleccionada no es válida."
+        }
+    )
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.RESTRICT,
+        verbose_name="sucursal asignada",
+        help_text="Seleccione la sucursal donde se encuentra o a la que está asignado el vehículo.",
+        error_messages={
+            'required': "Debe asignar el vehículo a una sucursal.",
+            'invalid_choice': "La sucursal seleccionada no es válida.",
+            'null': "El vehículo debe estar asignado a una sucursal.",
+            'blank': "Debe seleccionar una sucursal para el vehículo."
         }
     )
     color = models.CharField(

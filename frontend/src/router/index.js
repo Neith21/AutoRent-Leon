@@ -60,6 +60,12 @@ const routes = [
     props: true
   },
   {
+    meta: { title: 'Modelos de Vehículo', secure: true, requiredPermission: 'vehiclemodel.view_vehiclemodel' },
+    path: '/vehiclemodels',
+    name: 'vehicleModels',
+    component: () => import('@/views/VehicleModelView.vue'),
+  },
+  {
     meta: {
       title: 'Profile',
       secure: true

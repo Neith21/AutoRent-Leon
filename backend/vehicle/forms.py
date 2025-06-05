@@ -5,7 +5,7 @@ class VehicleForm(forms.ModelForm):
     class Meta:
         model = Vehicle
         fields = [
-            'plate', 'vehiclemodel', 'vehiclecategory', 'color', 'year',
+            'plate', 'vehiclemodel', 'vehiclecategory', 'branch', 'color', 'year',
             'engine', 'engine_type', 'engine_number', 'vin',
             'seat_count', 'description', 'status'
         ]
@@ -15,6 +15,9 @@ class VehicleForm(forms.ModelForm):
             },
             'vehiclecategory': {
                 'invalid_choice': "La categoría de vehículo seleccionada no existe o no es válida.",
+            },
+            'branch': {
+                'invalid_choice': "La sucursal seleccionada no existe o no es válida.",
             },
         }
 

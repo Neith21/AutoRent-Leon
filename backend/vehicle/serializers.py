@@ -4,11 +4,21 @@ from dotenv import load_dotenv
 import os
 from django.contrib.auth.models import User
 
+
+def get_base_url():
+        base_url = os.getenv("BASE_URL", "http://127.0.0.1:8000")
+        port = os.getenv("BASE_URL_BACKEND_PORT")
+        if port:
+            return f"{base_url}:{port}"
+        return base_url
+
+
 class VehicleSerializer(serializers.ModelSerializer):
     
     brand = serializers.CharField(source='vehiclemodel.brand.name')
     vehiclemodel = serializers.CharField(source='vehiclemodel.name')
     vehiclecategory = serializers.CharField(source='vehiclecategory.name')
+    branch = serializers.CharField(source='branch.name')
     images = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(format="%d-%m-%Y") #13/12/2025
@@ -22,6 +32,7 @@ class VehicleSerializer(serializers.ModelSerializer):
                   "brand",
                   "vehiclemodel",
                   "vehiclecategory",
+                  "branch",
                   "color",
                   "year",
                   "engine",
@@ -42,7 +53,8 @@ class VehicleSerializer(serializers.ModelSerializer):
                   )
 
     def get_images(self, obj):
-        base = f"{os.getenv('BASE_URL')}:{os.getenv('BASE_URL_BACKEND_PORT')}/uploads/vehicle/"
+        base_url = get_base_url()
+        base = f"{base_url}/uploads/vehicle/"
         return [
             f"{base}{img.vehicle_image}"
             for img in obj.images.all()
