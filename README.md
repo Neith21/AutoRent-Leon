@@ -100,4 +100,5 @@ Para volver a usar el backend es necesario activar el entorno virtual y correr e
 
 A partir de aquí tenemos la libertad de hacer lo que sea.
 Para volver a usar el frontend es necesario activar el entorno virtual y correr el servidor y ejecutar `npm run dev -- --host`
+
 ---
