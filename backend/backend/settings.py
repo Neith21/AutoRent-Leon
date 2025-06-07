@@ -57,6 +57,11 @@ INSTALLED_APPS = [
     'department',
     'municipality',
     'district',
+    'company',
+    'customer',
+    'rental',
+    'payment',
+    'invoice',
 ]
 
 MIDDLEWARE = [

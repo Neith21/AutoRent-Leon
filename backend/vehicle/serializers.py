@@ -40,6 +40,7 @@ class VehicleSerializer(serializers.ModelSerializer):
                   "engine_number",
                   "vin",
                   "seat_count",
+                  "daily_price",
                   "description",
                   "status",
                   "images",

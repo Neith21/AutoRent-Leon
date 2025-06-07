@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from django.http import JsonResponse
 from http import HTTPStatus
 from django.utils.timezone import now
+from decimal import Decimal, InvalidOperation
 
 from vehicle.models import Vehicle
 from vehiclemodel.models import VehicleModel
@@ -155,6 +156,7 @@ class VehicleRU(APIView):
                 "engine_number": vehicle.engine_number,
                 "vin": vehicle.vin,
                 "seat_count": vehicle.seat_count,
+                "daily_price": vehicle.daily_price,
                 "description": vehicle.description,
                 "status": vehicle.status,
             }
@@ -254,7 +256,7 @@ class VehicleRU(APIView):
         updatable_fields = [
             'plate', 'vehiclemodel_id', 'vehiclecategory_id', 'branch_id' 'color', 'year',
             'engine', 'engine_type', 'engine_number', 'vin',
-            'seat_count', 'description', 'status'
+            'seat_count', 'daily_price', 'description', 'status'
         ]
 
         cleaned_payload = {}
@@ -277,6 +279,14 @@ class VehicleRU(APIView):
                     return JsonResponse(
                         {"estado": "error", "mensaje": f"Valor inválido para '{field_name}'. Se esperaba un número.",
                          "detalles": {field_name: [{"message": "Debe ser un número entero.", "code": "invalid_type"}]}},
+                        status=HTTPStatus.BAD_REQUEST)
+            elif field_name == 'daily_price' and value is not None and value != '':
+                try:
+                    cleaned_value = Decimal(value)
+                except (InvalidOperation, TypeError):
+                    return JsonResponse(
+                        {"estado": "error", "mensaje": f"Valor inválido para '{field_name}'. Se esperaba un número decimal.",
+                         "detalles": {field_name: [{"message": "Debe ser un número decimal válido.", "code": "invalid_type"}]}},
                         status=HTTPStatus.BAD_REQUEST)
             
             cleaned_payload[field_name] = cleaned_value

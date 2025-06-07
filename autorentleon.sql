@@ -1,9 +1,8 @@
 -- ¡¡¡ IMPORTANTE, PRIMERO CREAR LA BD Y LUEGO HACER LAS MIGRACIONES !!! --
 CREATE DATABASE autorentleon;
-
--- ¡¡¡ LUEGO DE HACER LAS MIGRACIONES PROCEDER A INSERTAR SÓLO SI YA SE CREÓ UN SUPERUSUARIO !!! --
 USE autorentleon;
 
+-- ¡¡¡ LUEGO DE HACER LAS MIGRACIONES PROCEDER A INSERTAR SÓLO SI YA SE CREÓ UN SUPERUSUARIO !!! --
 INSERT INTO users_metadata (user_id, user_image) VALUES (1, 'hola_mundo.jpg');
 
 INSERT INTO department (code, department, active, created_by, created_at, modified_by, updated_at) VALUES
@@ -362,22 +361,22 @@ INSERT INTO vehiclemodel (brand_id, name, active, created_by, created_at, modifi
 (2, 'Explorer', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
 (3, 'Civic',    TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP);
 
-INSERT INTO vehicle (plate, vehiclemodel_id, vehiclecategory_id, branch_id, color, year, engine, engine_type, engine_number, vin, seat_count, description, status, active, created_by, created_at, modified_by, updated_at) VALUES
-('ABC123X', 1, 1, 1, 'Rojo Cereza', 2023, '2.5L I4', 'Gasolina', 'ENG100001', '1HGCM82P9JA123450', 5, 'Toyota Camry Sedan familiar', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('DEF456Y', 2, 3, 2, 'Azul Profundo', 2022, '1.8L I4', 'Gasolina', 'ENG100002', 'SALVD23R7KB543210', 5, 'Toyota Corolla Hatchback deportivo', 'Alquilado', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('GHI789Z', 3, 3, 3, 'Blanco Nacarado', 2024, 'Motor Electrico 150kW', 'Electrico', 'ENG100003E', '3FA6P0H7XRJ198765', 5, 'Ford Focus Electrico Hatchback', 'Reservado', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('JKL012A', 4, 2, 4, 'Gris Oxford', 2021, '2.3L Ecoboost', 'Gasolina', 'ENG100004D', 'JN1AZ48G7LW234567', 7, 'Ford Explorer SUV espacioso', 'En mantenimiento', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('MNO345B', 5, 1, 5, 'Negro Onix', 2023, '1.5L Turbo Hibrido', 'Hibrido', 'ENG100005H', '2T1BURHE7NC456789', 5, 'Honda Civic Sedan hibrido eficiente', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('PQR678C', 2, 1, 6, 'Verde Esmeralda', 2020, '1.8L I4', 'Gasolina', 'ENG100006', 'WVWZZZ1KZLW098765', 5, 'Toyota Corolla Sedan compacto', 'En reparacion', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('STU901D', 1, 1, 7, 'Plata Lunar', 2024, '2.5L I4', 'Gasolina', 'ENG100007', '1N4AL3AP4DN654321', 5, 'Toyota Camry Sedan elegante', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('VWX234E', 4, 2, 1, 'Amarillo Solar', 2022, 'Motor Electrico Dual', 'Electrico', 'ENG100008E', '5YJSA1E2XPF789012', 7, 'Ford Explorer SUV electrico', 'Alquilado', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('YZA567F', 2, 1, 2, 'Naranja Vibrante', 2021, '1.6L GLP', 'GLP', 'ENG100009L', 'KM8SR43A2MU876543', 5, 'Toyota Corolla Sedan con GLP', 'Reservado',TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('BCD890G', 4, 2, 3, 'Marron Tabaco', 2020, '3.0L V6 Diesel', 'Diesel', 'ENG100010D', 'WMXGZ2J7XLD765432', 7, 'Ford Explorer SUV Diesel robusta', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('EFG123H', 1, 1, 4, 'Azul Zafiro', 2023, '2.5L Hibrido', 'Hibrido', 'ENG100011', 'TRUAB7C53NH123987', 5, 'Toyota Camry Sedan hibrido', 'En mantenimiento', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('HIJ456J', 5, 1, 5, 'Rojo Pasion', 2022, '2.0L Hibrido Enchufable', 'Hibrido', 'ENG100012H', 'YV1BW78H2M1092345', 5, 'Honda Civic Sedan hibrido enchufable', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('KLM789K', 3, 3, 6, 'Gris Titanio', 2024, 'Motor Electrico 100kW', 'Electrico', 'ENG100013E', '4JGDA5EBXGE567123', 4, 'Ford Focus Electrico Hatchback compacto', 'Alquilado', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('NOP012L', 4, 2, 7, 'Blanco Alpino', 2021, '2.2L Diesel', 'Diesel', 'ENG100014D', 'VF15R4HX4PJ234901', 7, 'Ford Explorer SUV Diesel', 'Reservado', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
-('QRS345M', 5, 3, 1, 'Negro Cosmos', 2023, '1.5L Turbo', 'Gasolina', 'ENG100015', 'ZFA2500000J345678', 5, 'Honda Civic Hatchback moderno', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP);
+INSERT INTO vehicle (plate, vehiclemodel_id, vehiclecategory_id, branch_id, color, year, engine, engine_type, engine_number, vin, seat_count, daily_price, description, status, active, created_by, created_at, modified_by, updated_at) VALUES
+('ABC123X', 1, 1, 1, 'Rojo Cereza', 2023, '2.5L I4', 'Gasolina', 'ENG100001', '1HGCM82P9JA123450', 5, 55.00, 'Toyota Camry Sedan familiar', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('DEF456Y', 2, 3, 2, 'Azul Profundo', 2022, '1.8L I4', 'Gasolina', 'ENG100002', 'SALVD23R7KB543210', 5, 48.50, 'Toyota Corolla Hatchback deportivo', 'Alquilado', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('GHI789Z', 3, 3, 3, 'Blanco Nacarado', 2024, 'Motor Electrico 150kW', 'Electrico', 'ENG100003E', '3FA6P0H7XRJ198765', 5, 52.00, 'Ford Focus Electrico Hatchback', 'Reservado', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('JKL012A', 4, 2, 4, 'Gris Oxford', 2021, '2.3L Ecoboost', 'Gasolina', 'ENG100004D', 'JN1AZ48G7LW234567', 7, 70.00, 'Ford Explorer SUV espacioso', 'En mantenimiento', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('MNO345B', 5, 1, 5, 'Negro Onix', 2023, '1.5L Turbo Hibrido', 'Hibrido', 'ENG100005H', '2T1BURHE7NC456789', 5, 58.00, 'Honda Civic Sedan hibrido eficiente', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('PQR678C', 2, 1, 6, 'Verde Esmeralda', 2020, '1.8L I4', 'Gasolina', 'ENG100006', 'WVWZZZ1KZLW098765', 5, 45.00, 'Toyota Corolla Sedan compacto', 'En reparacion', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('STU901D', 1, 1, 7, 'Plata Lunar', 2024, '2.5L I4', 'Gasolina', 'ENG100007', '1N4AL3AP4DN654321', 5, 60.00, 'Toyota Camry Sedan elegante', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('VWX234E', 4, 2, 1, 'Amarillo Solar', 2022, 'Motor Electrico Dual', 'Electrico', 'ENG100008E', '5YJSA1E2XPF789012', 7, 75.50, 'Ford Explorer SUV electrico', 'Alquilado', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('YZA567F', 2, 1, 2, 'Naranja Vibrante', 2021, '1.6L GLP', 'GLP', 'ENG100009L', 'KM8SR43A2MU876543', 5, 47.00, 'Toyota Corolla Sedan con GLP', 'Reservado',TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('BCD890G', 4, 2, 3, 'Marron Tabaco', 2020, '3.0L V6 Diesel', 'Diesel', 'ENG100010D', 'WMXGZ2J7XLD765432', 7, 72.00, 'Ford Explorer SUV Diesel robusta', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('EFG123H', 1, 1, 4, 'Azul Zafiro', 2023, '2.5L Hibrido', 'Hibrido', 'ENG100011', 'TRUAB7C53NH123987', 5, 59.50, 'Toyota Camry Sedan hibrido', 'En mantenimiento', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('HIJ456J', 5, 1, 5, 'Rojo Pasion', 2022, '2.0L Hibrido Enchufable', 'Hibrido', 'ENG100012H', 'YV1BW78H2M1092345', 5, 57.00, 'Honda Civic Sedan hibrido enchufable', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('KLM789K', 3, 3, 6, 'Gris Titanio', 2024, 'Motor Electrico 100kW', 'Electrico', 'ENG100013E', '4JGDA5EBXGE567123', 4, 53.00, 'Ford Focus Electrico Hatchback compacto', 'Alquilado', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('NOP012L', 4, 2, 7, 'Blanco Alpino', 2021, '2.2L Diesel', 'Diesel', 'ENG100014D', 'VF15R4HX4PJ234901', 7, 73.50, 'Ford Explorer SUV Diesel', 'Reservado', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP),
+('QRS345M', 5, 3, 1, 'Negro Cosmos', 2023, '1.5L Turbo', 'Gasolina', 'ENG100015', 'ZFA2500000J345678', 5, 50.00, 'Honda Civic Hatchback moderno', 'Disponible', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP);
 
 INSERT INTO vehicleimage (vehicle_id, vehicle_image) VALUES
 (1, '1.png'),
@@ -396,5 +395,27 @@ INSERT INTO vehicleimage (vehicle_id, vehicle_image) VALUES
 (14, '4.png'),
 (15, '5.png');
 
+INSERT INTO customer (first_name, last_name, document_type, document_number, address, phone, email, customer_type, birth_date, status, reference, notes, active, created_by, created_at, modified_by, updated_at) VALUES
+('Juan Carlos', 'Pérez Gómez', 'DUI', '12345678-9', 'Colonia San Benito, Calle La Mascota, #52, San Salvador', '7855-4321', 'juan.perez@email.com', 'Nacional', '1990-05-15', 'Activo', 'Ana Martínez - 7766-5544', 'Cliente referido por la sucursal de Santa Tecla.', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP);
 
+INSERT INTO rental (customer_id, vehicle_id, pickup_branch_id, return_branch_id, start_date, end_date, actual_return_date, status, total_price, fuel_level_pickup, fuel_level_return, remarks, active, created_by, created_at, modified_by, updated_at)
+VALUES (
+    1, -- ID del cliente Juan Carlos Pérez Gómez
+    1, -- ID del vehículo 'ABC123X' (Toyota Camry)
+    1, -- ID de la sucursal de recogida
+    1, -- ID de la sucursal de devolución
+    '2025-06-07 10:00:00', -- Fecha de inicio del alquiler
+    '2025-06-10 10:00:00', -- Fecha de finalización del alquiler
+    NULL, -- Aún no se ha devuelto
+    'Activo', -- El alquiler está en curso
+    165.00, -- Precio calculado (55.00/día * 3 días)
+    'Lleno', -- Nivel de combustible al recoger
+    NULL, -- Aún no se ha devuelto
+    'Se verificó la llanta de repuesto y las herramientas. El cliente pagó un anticipo.',
+    TRUE,
+    1,
+    CURRENT_TIMESTAMP,
+    1,
+    CURRENT_TIMESTAMP
+);
 

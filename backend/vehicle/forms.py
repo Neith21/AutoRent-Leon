@@ -7,7 +7,7 @@ class VehicleForm(forms.ModelForm):
         fields = [
             'plate', 'vehiclemodel', 'vehiclecategory', 'branch', 'color', 'year',
             'engine', 'engine_type', 'engine_number', 'vin',
-            'seat_count', 'description', 'status'
+            'seat_count', 'daily_price', 'description', 'status'
         ]
         error_messages = {
             'vehiclemodel': {

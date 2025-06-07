@@ -1,7 +1,5 @@
 from rest_framework import serializers
 from vehiclemodel.models import VehicleModel
-from dotenv import load_dotenv
-import os
 from django.contrib.auth.models import User
 
 class VehicleModelSerializer(serializers.ModelSerializer):

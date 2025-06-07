@@ -162,6 +162,19 @@ class Vehicle(models.Model):
             'invalid': "Ingrese una cantidad de asientos válida."
         }
     )
+    daily_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="precio de alquiler diario",
+        help_text="Precio del alquiler por día. Use '.' como separador decimal.",
+        validators=[
+            MinValueValidator(0.01, message="El precio diario debe ser mayor que cero.")
+        ],
+        error_messages={
+            'required': "El precio de alquiler diario es obligatorio.",
+            'invalid': "Ingrese un precio válido."
+        }
+    )
     description = models.TextField(
         blank=True,
         verbose_name="descripción adicional",

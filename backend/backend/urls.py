@@ -35,6 +35,11 @@ urlpatterns = [
     path('api/v1/', include('vehicleimage.urls')),
     path('api/v1/', include('department.urls')),
     path('api/v1/', include('vehiclemodel.urls')),
+    path('api/v1/', include('company.urls')),
+    path('api/v1/', include('customer.urls')),
+    path('api/v1/', include('rental.urls')),
+    path('api/v1/', include('payment.urls')),
+    path('api/v1/', include('invoice.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
