@@ -8,7 +8,8 @@ import {
   mdiSourceBranch,
   mdiAccountGroup,
   mdiAccountGroupOutline,
-  mdiCarInfo
+  mdiCarInfo,
+  mdiAccountMultiple
 } from '@mdi/js'
 
 export default [
@@ -26,6 +27,18 @@ export default [
         label: 'Usuarios',
         icon: mdiAccountGroupOutline, 
         requiredPermission: 'user.view_user'
+      }
+    ]
+  },
+  {
+    label: 'Clientes',
+    icon: mdiAccountMultiple,
+    menu: [
+      {
+        to: '/customers',
+        label: 'Clientes',
+        icon: mdiAccountMultiple,
+        requiredPermission: 'customer.view_customer'
       }
     ]
   },
