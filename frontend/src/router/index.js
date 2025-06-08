@@ -66,6 +66,25 @@ const routes = [
     component: () => import('@/views/VehicleModelView.vue'),
   },
   {
+    meta: { title: 'Customer', secure: true, requiredPermission: 'customer.view_customer' },
+    path: '/customers',
+    name: 'customers',
+    component: () => import('@/views/CustomerView.vue'),
+  },
+  {
+    meta: { title: 'Crear Cliente', secure: true, requiredPermission: 'customer.add_customer' },
+    path: '/customers/create',
+    name: 'customerCreate',
+    component: () => import('@/views/CustomerCreateView.vue'),
+  },
+  {
+    meta: { title: 'Editar Cliente', secure: true, requiredPermission: 'customer.change_customer' },
+    path: '/customers/edit/:id',
+    name: 'customerEdit',
+    component: () => import('@/views/CustomerEditView.vue'),
+    props: true
+  },
+  {
     meta: {
       title: 'Profile',
       secure: true

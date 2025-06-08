@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, MinValueValidator
 from django.utils import timezone
 from datetime import date
+import re 
 
 def get_min_birth_date():
     """
@@ -165,7 +166,7 @@ class Customer(models.Model):
         # Validar formato de DUI
         if self.document_type == 'DUI':
             dui_regex = r'^\d{8}-\d{1}$'
-            if not RegexValidator(regex=dui_regex)(self.document_number):
+            if not re.match(dui_regex, self.document_number):
                 raise ValidationError({
                     'document_number': 'El formato del DUI debe ser 00000000-0.'
                 })
