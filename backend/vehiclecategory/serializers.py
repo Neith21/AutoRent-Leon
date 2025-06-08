@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 
 class VehicleCategorySerializer(serializers.ModelSerializer):
 
-    brand = serializers.CharField(source='brand.name')
     created_by_name = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(format="%d-%m-%Y") #13/12/2025
     modified_by_name = serializers.SerializerMethodField()

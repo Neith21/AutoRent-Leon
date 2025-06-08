@@ -32,6 +32,7 @@ const brands = ref([]);
 const selectedBrandId = ref(null);
 const modelsByBrand = ref([]);
 const vehicleCategories = ref([]);
+const branches = ref([]);
 
 const engineTypeOptions = ref([
   { id: 'Gasolina', label: 'Gasolina' },
@@ -53,6 +54,7 @@ const form = ref({
   plate: '',
   vehiclemodel_id: null,
   vehiclecategory_id: null,
+  branch_id: null,
   color: '',
   year: new Date().getFullYear(),
   engine: '',
@@ -60,6 +62,7 @@ const form = ref({
   engine_number: '',
   vin: '',
   seat_count: 4,
+  daily_price: '',
   description: '',
   status: 'Disponible',
   images: [] // Para las imágenes a subir
@@ -124,6 +127,21 @@ const fetchVehicleCategories = async () => {
   }
 };
 
+const fetchBranches = async () => {
+  if (!token) return;
+  try {
+    const config = { headers: { Authorization: `Bearer ${token}` } };
+    const response = await axios.get(`${API_URL}branch`, config);
+    branches.value = response.data?.data?.map(branch => ({
+      id: branch.id,
+      label: branch.name || 'Sucursal Desconocida'
+    })) || [];
+  } catch (e) {
+    console.error("Error fetching branches:", e);
+    mainStore.notify({ color: 'danger', message: 'Error cargando sucursales.' });
+  }
+};
+
 watch(selectedBrandId, async (newBrandId, oldBrandId) => {
   if (newBrandId !== oldBrandId) {
     form.value.vehiclemodel_id = null;
@@ -139,6 +157,7 @@ watch(selectedBrandId, async (newBrandId, oldBrandId) => {
 onMounted(async () => {
   await fetchBrands();
   await fetchVehicleCategories();
+  await fetchBranches();
   form.value.id = null;
   selectedBrandId.value = null;
   modelsByBrand.value = [];
@@ -189,6 +208,7 @@ const handleSubmit = async () => {
     selectedBrandId: 'Marca',
     vehiclemodel_id: 'Modelo',
     vehiclecategory_id: 'Categoría',
+    branch_id: 'Sucursal',
     color: 'Color',
     year: 'Año',
     engine: 'Motor (C.C.)',
@@ -196,6 +216,7 @@ const handleSubmit = async () => {
     engine_number: 'Número de Motor',
     vin: 'VIN',
     seat_count: 'N° de Asientos',
+    daily_price: 'Precio Diario',
     status: 'Estado'
   };
 
@@ -335,6 +356,11 @@ const cancelForm = () => {
           <FormControl v-model="form.vehiclecategory_id" id="vehiclecategory_id" :options="vehicleCategories"
             required />
         </FormField>
+
+        <FormField label="Sucursal">
+          <FormControl v-model="form.branch_id" id="branch_id" :options="branches" required placeholder="Seleccione una sucursal" />
+        </FormField>
+
         <FormField label="Color">
           <FormControl v-model="form.color" id="color" required placeholder="Ej: Rojo" />
         </FormField>
@@ -362,6 +388,18 @@ const cancelForm = () => {
 
         <FormField label="Estado">
           <FormControl v-model="form.status" id="status" :options="statusOptions" required />
+        </FormField>
+
+        <FormField label="Precio Diario ($)">
+          <FormControl 
+            v-model="form.daily_price" 
+            id="daily_price" 
+            type="number" 
+            required 
+            placeholder="Ej: 50.00" 
+            step="0.01" 
+            min="0"
+          />
         </FormField>
 
         <FormField label="Descripción" class="md:col-span-2">

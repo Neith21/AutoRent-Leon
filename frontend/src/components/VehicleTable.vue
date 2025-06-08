@@ -33,6 +33,7 @@ const brandFilter = ref('')
 const modelFilter = ref('')
 const yearFilter = ref('')
 const statusFilter = ref('')
+const branchFilter = ref('')
 const sortDescending = ref(false)
 
 const perPage = ref(10)
@@ -51,6 +52,11 @@ const uniqueBrands = computed(() => {
 const uniqueModels = computed(() => {
   if (!vehicles.value) return [];
   return [...new Set(vehicles.value.map(v => v.vehiclemodel).filter(Boolean))].sort();
+});
+
+const uniqueBranches = computed(() => {
+  if (!vehicles.value) return [];
+  return [...new Set(vehicles.value.map(v => v.branch).filter(Boolean))].sort();
 });
 
 const yearOptions = computed(() => {
@@ -101,6 +107,10 @@ const filteredVehicles = computed(() => {
   if (statusFilter.value) {
     filtered = filtered.filter(v => v.status && v.status === statusFilter.value);
   }
+  if (branchFilter.value) {
+    const term = branchFilter.value.toLowerCase();
+    filtered = filtered.filter(v => v.branch && v.branch.toLowerCase().includes(term));
+  }
 
   filtered.sort((a, b) => {
     if (sortDescending.value) { return b.id - a.id; }
@@ -116,7 +126,7 @@ const numPages = computed(() => Math.ceil(filteredVehicles.value.length / perPag
 const currentPageHuman = computed(() => currentPage.value + 1)
 const pagesList = computed(() => Array.from({ length: numPages.value }, (_, i) => i))
 
-watch([searchTerm, plateFilter, brandFilter, modelFilter, yearFilter, statusFilter, sortDescending], () => {
+watch([searchTerm, plateFilter, brandFilter, modelFilter, yearFilter, statusFilter, branchFilter, sortDescending], () => {
   currentPage.value = 0;
 });
 
@@ -126,6 +136,7 @@ const sortIcon = computed(() => sortDescending.value ? mdiSortDescending : mdiSo
 const clearAllFilters = () => {
   searchTerm.value = ''; plateFilter.value = ''; brandFilter.value = '';
   modelFilter.value = ''; yearFilter.value = ''; statusFilter.value = '';
+  branchFilter.value = '';
 };
 
 const isDeleteModalActive = ref(false)
@@ -182,7 +193,7 @@ const confirmDelete = async () => {
 };
 
 const getTableHeaders = () => {
-  const headers = ["ID", "Placa", "Marca", "Modelo", "Categoría", "Color", "Año", "Motor (C.C.)", "Tipo Motor", "N° Motor", "VIN", "Asientos", "Descripción", "Estado", "Primera Imagen (URL)"];
+  const headers = ["ID", "Placa", "Marca", "Modelo", "Categoría", "Sucursal", "Color", "Año", "Motor (C.C.)", "Tipo Motor", "N° Motor", "VIN", "Asientos", "Precio Diario ($)", "Descripción", "Estado", "Primera Imagen (URL)"];
   if (authStore.isSuperuser) { // Usar getter del store
     headers.push("Creado por", "Fecha Creación", "Modificado por", "Fecha Modificación");
   }
@@ -191,8 +202,9 @@ const getTableHeaders = () => {
 const getVehicleDataForExport = (vehicle) => {
   const data = [
     vehicle.id || '', vehicle.plate || '', vehicle.brand || '', vehicle.vehiclemodel || '',
-    vehicle.vehiclecategory || '', vehicle.color || '', vehicle.year || '', vehicle.engine || '',
+    vehicle.vehiclecategory || '', vehicle.branch || '',  vehicle.color || '', vehicle.year || '', vehicle.engine || '',
     vehicle.engine_type || '', vehicle.engine_number || '', vehicle.vin || '', vehicle.seat_count || '',
+    vehicle.daily_price !== null && vehicle.daily_price !== undefined ? vehicle.daily_price : '',
     vehicle.description || '', vehicle.status || '', (vehicle.images && vehicle.images.length > 0) ? vehicle.images[0] : ''
   ];
   if (authStore.isSuperuser) { // Usar getter del store
@@ -276,6 +288,7 @@ const exportToExcel = () => {
       <p><strong>Marca:</strong> {{ selectedVehicleForView.brand }}</p>
       <p><strong>Modelo:</strong> {{ selectedVehicleForView.vehiclemodel }}</p>
       <p><strong>Categoría:</strong> {{ selectedVehicleForView.vehiclecategory }}</p>
+      <p><strong>Sucursal:</strong> {{ selectedVehicleForView.branch || 'N/A' }}</p>
       <p><strong>Año:</strong> {{ selectedVehicleForView.year }}</p>
       <p><strong>Color:</strong> {{ selectedVehicleForView.color }}</p>
       <p><strong>Motor (C.C.):</strong> {{ selectedVehicleForView.engine }}</p>
@@ -283,6 +296,7 @@ const exportToExcel = () => {
       <p><strong>N° Motor:</strong> {{ selectedVehicleForView.engine_number }}</p>
       <p><strong>VIN:</strong> {{ selectedVehicleForView.vin }}</p>
       <p><strong>Asientos:</strong> {{ selectedVehicleForView.seat_count }}</p>
+      <p><strong>Precio Diario:</strong> ${{ Number(selectedVehicleForView.daily_price || 0).toFixed(2) }}</p>
       <p><strong>Descripción:</strong> <span class="whitespace-pre-wrap">{{ selectedVehicleForView.description || 'N/A' }}</span></p>
       <p><strong>Estado:</strong> {{ selectedVehicleForView.status }}</p>
       <p><strong>Activo:</strong> <span :class="selectedVehicleForView.active ? 'text-green-600' : 'text-red-600'">{{ selectedVehicleForView.active ? 'Sí' : 'No' }}</span></p>
@@ -356,8 +370,10 @@ const exportToExcel = () => {
           <th scope="col" class="px-4 py-3">Placa</th>
           <th scope="col" class="px-4 py-3">Marca</th>
           <th scope="col" class="px-4 py-3">Modelo</th>
+          <th scope="col" class="px-4 py-3">Sucursal</th>
           <th scope="col" class="px-4 py-3">Año</th>
           <th scope="col" class="px-4 py-3">Color</th>
+          <th scope="col" class="px-4 py-3">Precio Diario</th>
           <th scope="col" class="px-4 py-3">Estado</th>
           <th scope="col" class="px-4 py-3 text-center">Acciones</th>
         </tr>
@@ -389,11 +405,18 @@ const exportToExcel = () => {
             </datalist>
           </td>
           <td class="px-1 py-1">
+             <input list="branch-datalist" v-model.lazy="branchFilter" placeholder="Filtrar..." class="w-full p-1 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs min-w-[120px] text-gray-900 dark:text-gray-100" />
+            <datalist id="branch-datalist">
+              <option v-for="branch in uniqueBranches" :key="branch" :value="branch"></option>
+            </datalist>
+          </td>
+          <td class="px-1 py-1">
             <select v-model="yearFilter" class="w-full p-1 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs min-w-[80px] text-gray-900 dark:text-gray-100">
               <option value="">Todos</option>
               <option v-for="year in yearOptions" :key="year" :value="year">{{ year }}</option>
             </select>
           </td>
+          <td class="px-1 py-1"></td>
           <td class="px-1 py-1"></td>
           <td class="px-1 py-1">
             <select v-model="statusFilter" class="w-full p-1 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs min-w-[120px] text-gray-900 dark:text-gray-100">
@@ -428,8 +451,10 @@ const exportToExcel = () => {
           </td>
           <td data-label="Marca" class="px-4 py-2">{{ vehicle.brand }}</td>
           <td data-label="Modelo" class="px-4 py-2">{{ vehicle.vehiclemodel }}</td>
+          <td data-label="Sucursal" class="px-4 py-2">{{ vehicle.branch }}</td>
           <td data-label="Año" class="px-4 py-2">{{ vehicle.year }}</td>
           <td data-label="Color" class="px-4 py-2">{{ vehicle.color }}</td>
+          <td data-label="Precio Diario" class="px-4 py-2">${{ Number(vehicle.daily_price || 0).toFixed(2) }}</td>
           <td data-label="Estado" class="px-4 py-2">
             <span :class="{
               'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': vehicle.status === 'Disponible',
