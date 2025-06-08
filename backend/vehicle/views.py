@@ -254,7 +254,7 @@ class VehicleRU(APIView):
             )
 
         updatable_fields = [
-            'plate', 'vehiclemodel_id', 'vehiclecategory_id', 'branch_id' 'color', 'year',
+            'plate', 'vehiclemodel_id', 'vehiclecategory_id', 'branch_id', 'color', 'year',
             'engine', 'engine_type', 'engine_number', 'vin',
             'seat_count', 'daily_price', 'description', 'status'
         ]

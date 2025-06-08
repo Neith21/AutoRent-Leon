@@ -213,6 +213,12 @@ class VehicleModelD(APIView):
                 "message": "El modelo de vehículo ya está inactivo."
             }, status=HTTPStatus.OK)
 
+        if vehicle_model.vehicle_set.exists():
+             return JsonResponse({
+                "status": "error",
+                "message": "No se puede desactivar el modelo porque tiene vehículos asociados."
+            }, status=HTTPStatus.CONFLICT)
+
         try:
             vehicle_model.active = False
             vehicle_model.modified_by = user_id
@@ -222,8 +228,8 @@ class VehicleModelD(APIView):
                 "status": "success",
                 "message": "Modelo de vehículo desactivado exitosamente."
             }, status=HTTPStatus.OK)
-        except Exception:
+        except Exception as e:
             return JsonResponse({
                 "status": "error",
-                "message": "Error inesperado al desactivar el modelo de vehículo."
+                "message": f"Error inesperado al desactivar el modelo de vehículo: {str(e)}"
             }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
