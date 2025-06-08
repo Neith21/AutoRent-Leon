@@ -100,7 +100,7 @@ const fetchBrands = async () => {
   if (!authStore.authToken) return; loading.value = true;
   try {
     const configAxios = { headers: { 'Authorization': `Bearer ${authStore.authToken}` } }
-    const response = await axios.get(`${API_URL}brand/`, configAxios)
+    const response = await axios.get(`${API_URL}brand`, configAxios)
     brands.value = response.data?.data || []
   } catch (e) {
     console.error('Error obteniendo marcas:', e);

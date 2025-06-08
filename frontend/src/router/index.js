@@ -85,6 +85,18 @@ const routes = [
     props: true
   },
   {
+    meta: { title: 'Marcas', secure: true, requiredPermission: 'brand.view_brand' },
+    path: '/brands',
+    name: 'brands',
+    component: () => import('@/views/BrandView.vue'),
+  },
+  {
+    meta: { title: 'Categorías', secure: true, requiredPermission: 'vehiclecategory.view_vehiclecategory' },
+    path: '/vehiclecategories',
+    name: 'vehicleCategories',
+    component: () => import('@/views/VehicleCategoryView.vue'),
+  },
+  {
     meta: {
       title: 'Profile',
       secure: true

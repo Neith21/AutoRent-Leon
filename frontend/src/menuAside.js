@@ -9,7 +9,9 @@ import {
   mdiAccountGroup,
   mdiAccountGroupOutline,
   mdiCarInfo,
-  mdiAccountMultiple
+  mdiAccountMultiple,
+  mdiCarSports,
+  mdiShapePlusOutline
 } from '@mdi/js'
 
 export default [
@@ -58,6 +60,18 @@ export default [
     label: 'Vehículos',
     icon: mdiCarBack,
     menu: [
+      {
+        to: '/vehiclecategories',
+        label: 'Categorías',
+        icon: mdiShapePlusOutline,
+        requiredPermission: 'vehiclecategory.view_vehiclecategory'
+      },
+      {
+        to: '/brands',
+        label: 'Marcas',
+        icon: mdiCarSports,
+        requiredPermission: 'brand.view_brand'
+      },
       {
         to: '/vehiclemodels',
         label: 'Modelos',

@@ -176,10 +176,18 @@ class CustomerRU(APIView):
             fields_to_exclude = ['active', 'created_by', 'created_at', 'modified_by', 'updated_at']
             customer_instance.full_clean(exclude=fields_to_exclude)
         except ValidationError as e:
+            error_dict = e.message_dict 
+
+            error_message = "Datos inválidos. Por favor, corrija los errores."
+
+            if error_dict:
+                first_field_with_error = next(iter(error_dict))
+                error_message = error_dict[first_field_with_error][0]
+
             return JsonResponse({
                 "status": "error",
-                "message": "Datos inválidos. Por favor, corrija los errores.",
-                "errors": e.message_dict
+                "message": error_message,
+                "errors": error_dict
             }, status=HTTPStatus.BAD_REQUEST)
 
         try:

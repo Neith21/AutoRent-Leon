@@ -67,7 +67,7 @@ class BrandRC(APIView):
             }, status=HTTPStatus.BAD_REQUEST)
 
 
-class BrandRUD(APIView):
+class BrandRU(APIView):
 
     def get_object(self, id):
         try:
