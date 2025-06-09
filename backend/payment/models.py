@@ -59,7 +59,7 @@ class Payment(models.Model):
         help_text="La razón o motivo del pago (anticipo, pago final, etc.).",
         error_messages={'required': "Debe especificar el concepto del pago."}
     )
-
+    
     reference = models.CharField(
         max_length=150,
         blank=True, # La referencia es opcional, no siempre se tendrá una.

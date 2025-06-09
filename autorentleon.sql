@@ -395,8 +395,8 @@ INSERT INTO vehicleimage (vehicle_id, vehicle_image) VALUES
 (14, '4.png'),
 (15, '5.png');
 
-INSERT INTO customer (first_name, last_name, document_type, document_number, address, phone, email, customer_type, birth_date, status, reference, notes, active, created_by, created_at, modified_by, updated_at) VALUES
-('Juan Carlos', 'Pérez Gómez', 'DUI', '12345678-9', 'Colonia San Benito, Calle La Mascota, #52, San Salvador', '7855-4321', 'juan.perez@email.com', 'Nacional', '1990-05-15', 'Activo', 'Ana Martínez - 7766-5544', 'Cliente referido por la sucursal de Santa Tecla.', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP);
+/* INSERT INTO customer (first_name, last_name, document_type, document_number, address, phone, email, customer_type, birth_date, status, reference, notes, active, created_by, created_at, modified_by, updated_at) VALUES
+('Juan Carlos', 'Pérez Gómez', 'DUI', '12345678-9', 'Colonia San Benito, Calle La Mascota, #52, San Salvador', '78554321', 'juan.perez@email.com', 'Nacional', '1990-05-15', 'Activo', 'Ana Martínez - 7766-5544', 'Cliente referido por la sucursal de Santa Tecla.', TRUE, 1, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP);
 
 INSERT INTO rental (customer_id, vehicle_id, pickup_branch_id, return_branch_id, start_date, end_date, actual_return_date, status, total_price, fuel_level_pickup, fuel_level_return, remarks, active, created_by, created_at, modified_by, updated_at)
 VALUES (
@@ -417,5 +417,59 @@ VALUES (
     CURRENT_TIMESTAMP,
     1,
     CURRENT_TIMESTAMP
-);
+); */
+
+-- ==================================================
+-- 1. Inserción de Clientes
+-- ==================================================
+
+-- Cliente 1: Nacional
+INSERT INTO customer (id, first_name, last_name, document_type, document_number, address, phone, email, customer_type, birth_date, status, notes, active, created_by, created_at, modified_by, updated_at) VALUES
+(1, 'Juan', 'Pérez', 'DUI', '01234567-8', 'Calle Falsa 123, San Salvador', '7888-9999', 'juan.perez@email.com', 'Nacional', '1990-05-15', 'Activo', 'Cliente recurrente, sucursal principal.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+-- Cliente 2: Extranjero
+INSERT INTO customer (id, first_name, last_name, document_type, document_number, address, phone, email, customer_type, birth_date, status, notes, active, created_by, created_at, modified_by, updated_at) VALUES
+(2, 'John', 'Smith', 'Pasaporte', 'A1B23C456', '456 Oak Avenue, New York', '555-1234', 'john.smith@email.com', 'Extranjero', '1985-10-20', 'Activo', 'Primera vez que alquila. Se verificó pasaporte y licencia internacional.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+
+-- ==================================================
+-- 2. Alquileres ACTIVOS para Cliente 1 (Juan Pérez, ID=1)
+-- ==================================================
+
+-- Alquiler 1: Activo, corta duración (4 días), requiere pago parcial 50%.
+INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch_id, start_date, end_date, actual_return_date, status, total_price, fuel_level_pickup, fuel_level_return, remarks, active, created_by, created_at, modified_by, updated_at) VALUES 
+(1, 1, 1, 1, 1, '2025-06-08 10:00:00', '2025-06-12 10:00:00', NULL, 'Activo', 200.00, 'Lleno', NULL, 'Anticipo del 50% recibido. Vehículo entregado sin detalles.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+-- Pago de anticipo para el alquiler 1
+INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, active, created_by, created_at, modified_by, updated_at) VALUES
+(1, 100.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Anticipo', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+
+-- Alquiler 2: Activo, larga duración (10 días), requiere pago total.
+INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch_id, start_date, end_date, actual_return_date, status, total_price, fuel_level_pickup, fuel_level_return, remarks, active, created_by, created_at, modified_by, updated_at) VALUES
+(2, 1, 2, 1, 2, '2025-06-09 14:00:00', '2025-06-19 14:00:00', NULL, 'Activo', 500.00, '1/2', NULL, 'Pago total recibido por ser más de 5 días de alquiler.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+-- Pago total (considerado anticipo) para el alquiler 2
+INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, active, created_by, created_at, modified_by, updated_at) VALUES
+(2, 500.00, 'Efectivo', '2025-06-09 14:05:00', 'Anticipo', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+
+-- ==================================================
+-- 3. Alquiler FINALIZADO para Cliente 2 (John Smith, ID=2)
+-- ==================================================
+
+-- Alquiler 3: Finalizado
+INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch_id, start_date, end_date, actual_return_date, status, total_price, fuel_level_pickup, fuel_level_return, remarks, active, created_by, created_at, modified_by, updated_at) VALUES
+(3, 2, 3, 2, 2, '2025-05-20 09:00:00', '2025-05-23 09:00:00', '2025-05-23 08:45:00', 'Finalizado', 180.00, 'Lleno', 'Lleno', 'Vehículo devuelto en excelentes condiciones. Se procede a reembolsar depósito.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+-- Pagos para el alquiler 3.
+INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
+(3, 100.00, 'Tarjeta de Credito', '2025-05-20 09:05:00', 'Anticipo', 'Depósito de seguridad para extranjero', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
+(3, 90.00, 'Tarjeta de Credito', '2025-05-20 09:05:00', 'Anticipo', '50% del costo del alquiler', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
+(3, 90.00, 'Tarjeta de Credito', '2025-05-23 08:50:00', 'Pago Final', 'Pago del 50% restante', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
+(3, -100.00, 'Tarjeta de Credito', '2025-05-23 08:55:00', 'Reembolso', 'Devolución de depósito de seguridad', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+-- Factura generada para el alquiler 3 (pagada)
+INSERT INTO invoice (rental_id, invoice_number, issue_date, total_amount, status, active, created_by, created_at, modified_by, updated_at) VALUES
+(3, 'INV-2025-0001', '2025-05-23 09:00:00', 180.00, 'Pagada', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
