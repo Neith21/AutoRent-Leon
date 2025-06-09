@@ -8,8 +8,8 @@ class Payment(models.Model):
     # --- Choices para los campos ENUM ---
     PAYMENT_TYPE_CHOICES = [
         ('Efectivo', 'Efectivo'),
-        ('Tarjeta de Crédito', 'Tarjeta de Crédito'),
-        ('Tarjeta de Débito', 'Tarjeta de Débito'),
+        ('Tarjeta de Credito', 'Tarjeta de Crédito'),
+        ('Tarjeta de Debito', 'Tarjeta de Débito'),
         ('Transferencia', 'Transferencia Bancaria'),
     ]
 
@@ -58,6 +58,12 @@ class Payment(models.Model):
         verbose_name="concepto del pago",
         help_text="La razón o motivo del pago (anticipo, pago final, etc.).",
         error_messages={'required': "Debe especificar el concepto del pago."}
+    )
+    reference = models.CharField(
+        max_length=150,
+        blank=True, # La referencia es opcional, no siempre se tendrá una.
+        verbose_name="referencia o código de transacción",
+        help_text="Información adicional (Depósito de seguridad para extranjero, 50% del costo del alquiler, etc.)."
     )
     
     # --- Campos de Auditoría ---
