@@ -64,6 +64,36 @@ const getAuthConfig = () => ({
   },
 });
 
+const getAuthConfigJson = () => ({
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+});
+
+// --- Función utilitaria para formatear fecha y hora a DD-MM-YYYY HH:MM ---
+const getFormattedDateTime = (isoDateTimeString) => {
+  if (!isoDateTimeString) {
+    return '';
+  }
+  
+  const dateObj = new Date(isoDateTimeString);
+
+  if (isNaN(dateObj.getTime())) {
+    console.warn('Advertencia: Intento de formatear una fecha/hora inválida:', isoDateTimeString);
+    return ''; 
+  }
+
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const year = dateObj.getFullYear();
+  const hours = String(dateObj.getHours()).padStart(2, '0');
+  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+
+  return `${day}-${month}-${year} ${hours}:${minutes}`;
+};
+
+
 // --- Funciones para cargar datos de dropdowns ---
 
 const fetchCustomers = async () => {
@@ -152,11 +182,13 @@ const calculateRentalPrice = async () => {
           'Content-Type': 'application/json'
         }
       };
+      
+      // *** APLICAR getFormattedDateTime AQUI ANTES DE ENVIAR LA DATA ***
       const payload = {
         customer: customer,
         vehicle: vehicle,
-        start_date: start_date, // Enviando directamente el formato de datetime-local (ISO 8601)
-        end_date: end_date,     // Enviando directamente el formato de datetime-local (ISO 8601)
+        start_date: getFormattedDateTime(start_date), // <-- ¡Cambio aquí!
+        end_date: getFormattedDateTime(end_date),     // <-- ¡Cambio aquí!
       };
       
       const response = await axios.post(`${API_URL}rental/calculate-price/`, payload, config);
@@ -221,6 +253,7 @@ onMounted(async () => {
     fetchBranches(),
   ]);
 
+  // Restablecer el formulario y los detalles del precio al montar
   form.value = {
     customer: null,
     vehicle: null,
@@ -239,13 +272,6 @@ onMounted(async () => {
   durationDays.value = 0;
   vehicleDailyRate.value = '0.00';
   showPriceDetails.value = false;
-});
-
-const getAuthConfigJson = () => ({
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
 });
 
 const handleSubmit = async () => {
@@ -280,7 +306,6 @@ const handleSubmit = async () => {
     return;
   }
 
-  // Las fechas del formulario ya estarán en formato YYYY-MM-DDTHH:mm
   // Asegurarse de que la fecha de inicio no sea pasada (con 1 minuto de holgura)
   if (startDate.getTime() < (now.getTime() - 60000)) { 
     mainStore.notify({ color: 'danger', message: 'La fecha y hora de inicio no puede ser una fecha pasada.' });
@@ -298,9 +323,9 @@ const handleSubmit = async () => {
 
   try {
     const payload = { ...form.value };
-    // Enviando directamente el formato de datetime-local (ISO 8601)
-    payload.start_date = form.value.start_date; 
-    payload.end_date = form.value.end_date;     
+    // *** APLICAR getFormattedDateTime AQUI ANTES DE ENVIAR LA DATA FINAL ***
+    payload.start_date = getFormattedDateTime(form.value.start_date); // Aplicando el formato para el envío final
+    payload.end_date = getFormattedDateTime(form.value.end_date);     // Aplicando el formato para el envío final
     
     await axios.post(`${API_URL}rental/`, payload, getAuthConfigJson()); 
     mainStore.notify({ color: 'success', message: 'Alquiler creado exitosamente.' });

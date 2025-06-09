@@ -326,7 +326,7 @@ class RentalFinalizeSerializer(serializers.Serializer):
                 # Para simplicidad, se devuelve el depósito original si no hay saldo pendiente.
                 
                 # Check if a return deposit payment already exists to prevent duplicates
-                if not Payment.objects.filter(rental=rental, concept='devolucion_deposito').exists():
+                if not Payment.objects.filter(rental=rental, concept='devolucion_deposito').exists(): #error
                     Payment.objects.create(
                         rental=rental,
                         amount=deposit_received, # Registra el monto original del depósito como devuelto

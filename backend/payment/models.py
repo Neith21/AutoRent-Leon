@@ -13,12 +13,11 @@ class Payment(models.Model):
         ('Transferencia', 'Transferencia Bancaria'),
     ]
 
-    CONCEPT_CHOICES = [
-        ('Anticipo', 'Anticipo'),
-        ('Pago Final', 'Pago Final'),
-        ('Cargo Adicional', 'Cargo Adicional'), # Por ejemplo, por combustible o daños.
-        ('Cargo por Retraso', 'Cargo por Retraso'), # Específico para días extra.
-        ('Reembolso', 'Reembolso'), # Para devoluciones de depósitos o ajustes.
+    PAYMENT_TYPE_CHOICES = [
+        ('Efectivo', 'Efectivo'),
+        ('Tarjeta de Credito', 'Tarjeta de Crédito'),
+        ('Tarjeta de Debito', 'Tarjeta de Débito'),
+        ('Transferencia', 'Transferencia Bancaria'),
     ]
     
     # --- Relaciones y Campos Principales ---
