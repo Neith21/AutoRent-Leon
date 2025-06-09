@@ -97,6 +97,18 @@ const routes = [
     component: () => import('@/views/VehicleCategoryView.vue'),
   },
   {
+    meta: { title: 'Alquileres', secure: true, requiredPermission: 'rental.view_rental' },
+    path: '/rentals',
+    name: 'rentals',
+    component: () => import('@/views/RentalView.vue'),
+  },
+  {
+    meta: { title: 'Crear Alquiler', secure: true, requiredPermission: 'rental.add_rental' },
+    path: '/rentals/create',
+    name: 'rentalCreate',
+    component: () => import('@/views/RentalCreateView.vue'),
+  },
+  {
     meta: {
       title: 'Profile',
       secure: true
