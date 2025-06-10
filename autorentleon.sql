@@ -441,8 +441,8 @@ INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch
 (1, 1, 1, 1, 1, '2025-06-08 10:00:00', '2025-06-12 10:00:00', NULL, 'Activo', 200.00, 'Lleno', NULL, 'Anticipo del 50% recibido. Vehículo entregado sin detalles.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 -- Pago de anticipo para el alquiler 1
-INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, active, created_by, created_at, modified_by, updated_at) VALUES
-(1, 100.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Anticipo', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
+(1, 100.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Anticipo', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 
 -- Alquiler 2: Activo, larga duración (10 días), requiere pago total.
@@ -450,8 +450,8 @@ INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch
 (2, 1, 2, 1, 2, '2025-06-09 14:00:00', '2025-06-19 14:00:00', NULL, 'Activo', 500.00, '1/2', NULL, 'Pago total recibido por ser más de 5 días de alquiler.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 -- Pago total (considerado anticipo) para el alquiler 2
-INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, active, created_by, created_at, modified_by, updated_at) VALUES
-(2, 500.00, 'Efectivo', '2025-06-09 14:05:00', 'Anticipo', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
+(2, 500.00, 'Efectivo', '2025-06-09 14:05:00', 'Anticipo', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 
 -- ==================================================
@@ -464,12 +464,12 @@ INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch
 
 -- Pagos para el alquiler 3.
 INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
+(3, 100.00, 'Tarjeta de Credito', '2025-05-20 09:05:00', 'Anticipo', 'Cargo extra, gasolina', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
 (3, 100.00, 'Tarjeta de Credito', '2025-05-20 09:05:00', 'Anticipo', 'Depósito de seguridad para extranjero', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
 (3, 90.00, 'Tarjeta de Credito', '2025-05-20 09:05:00', 'Anticipo', '50% del costo del alquiler', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
 (3, 90.00, 'Tarjeta de Credito', '2025-05-23 08:50:00', 'Pago Final', 'Pago del 50% restante', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
 (3, -100.00, 'Tarjeta de Credito', '2025-05-23 08:55:00', 'Reembolso', 'Devolución de depósito de seguridad', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 -- Factura generada para el alquiler 3 (pagada)
-INSERT INTO invoice (rental_id, invoice_number, issue_date, total_amount, status, active, created_by, created_at, modified_by, updated_at) VALUES
-(3, 'INV-2025-0001', '2025-05-23 09:00:00', 180.00, 'Pagada', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
-
+INSERT INTO invoice (rental_id, invoice_number, issue_date, total_amount, reference, status, active, created_by, created_at, modified_by, updated_at) VALUES
+(3, 'INV-2025-0001', '2025-05-23 09:00:00', 180.00, 'Hola', 'Pagada', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);

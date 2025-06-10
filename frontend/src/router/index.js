@@ -109,6 +109,18 @@ const routes = [
     component: () => import('@/views/RentalCreateView.vue'),
   },
   {
+    meta: { title: 'Facturas', secure: true, requiredPermission: 'invoice.view_invoice' },
+    path: '/invoices',
+    name: 'invoices',
+    component: () => import('@/views/InvoiceView.vue'),
+  },
+  {
+    meta: { title: 'Crear Factura', secure: true, requiredPermission: 'invoice.add_invoice' },
+    path: '/invoices/create',
+    name: 'invoiceCreate',
+    component: () => import('@/views/InvoiceCreateView.vue'),
+  },
+  {
     meta: {
       title: 'Profile',
       secure: true

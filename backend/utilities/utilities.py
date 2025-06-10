@@ -3,10 +3,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
 from dotenv import load_dotenv
+from email.mime.application import MIMEApplication
 
 load_dotenv()
 
-def sendMail(html_content: str, subject: str, recipient_email: str):
+def sendMail(html_content: str, subject: str, recipient_email: str, attachment_data=None, attachment_filename=None):
     smtp_server_host = os.getenv("SMTP_SERVER")
     smtp_port_str = os.getenv("SMTP_PORT")
     smtp_auth_user = os.getenv("SMTP_USER")
@@ -29,6 +30,11 @@ def sendMail(html_content: str, subject: str, recipient_email: str):
     message['From'] = sender_email_address
     message['To'] = recipient_email
     message.attach(MIMEText(html_content, 'html', 'utf-8'))
+
+    if attachment_data and attachment_filename:
+        part = MIMEApplication(attachment_data, Name=attachment_filename)
+        part['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
+        message.attach(part)
 
     smtp_connection = None
     try:

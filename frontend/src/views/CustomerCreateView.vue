@@ -131,11 +131,11 @@ const cancelForm = () => {
       </NotificationBar>
     </div>
 
-    <SectionTitleLineWithButton :icon="mdiAccountPlus" :title="pageTitle" main>
+    <SectionTitleLineWithButton :icon="mdiAccountPlus" :title="pageTitle" main style="margin: 2rem;">
       <BaseButton :to="{ name: 'customers' }" :icon="mdiArrowLeftCircle" label="Volver a la lista" color="contrast" rounded-full small />
     </SectionTitleLineWithButton>
     
-    <CardBox is-form @submit.prevent="handleSubmit" class="mx-4 md:mx-0">
+    <CardBox is-form @submit.prevent="handleSubmit" class="mx-4 md:mx-0" style="margin: 2rem;">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         <FormField label="Nombres" required><FormControl v-model="form.first_name" placeholder="Nombres del cliente" /></FormField>

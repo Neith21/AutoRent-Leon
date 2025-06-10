@@ -255,7 +255,7 @@ const cancelForm = () => {
       </NotificationBar>
     </div>
 
-    <SectionTitleLineWithButton :icon="mdiPlus" :title="pageTitle" main style="margin: 1rem;">
+    <SectionTitleLineWithButton :icon="mdiPlus" :title="pageTitle" main style="margin: 2rem;">
       <BaseButton
         :to="{ name: 'branches' }"
         :icon="mdiArrowLeftCircle"
@@ -265,7 +265,7 @@ const cancelForm = () => {
         small
       />
     </SectionTitleLineWithButton>
-    <CardBox is-form @submit.prevent="handleSubmit" style="margin: 1rem;">
+    <CardBox is-form @submit.prevent="handleSubmit" style="margin: 2rem;">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField label="Nombre de Sucursal" required>
           <FormControl v-model="form.name" id="name" placeholder="Ej: Sucursal Central" />

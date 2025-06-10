@@ -11,7 +11,8 @@ import {
   mdiCarInfo,
   mdiAccountMultiple,
   mdiCarSports,
-  mdiShapePlusOutline
+  mdiShapePlusOutline,
+  mdiInvoiceEditOutline
 } from '@mdi/js'
 
 export default [
@@ -59,6 +60,12 @@ export default [
         label: 'Alquileres',
         icon: mdiSquareEditOutline,
         requiredPermission: 'rental.view_rental'
+      },
+      {
+        to: '/invoices/create',
+        label: 'Facturas',
+        icon: mdiInvoiceEditOutline,
+        requiredPermission: 'invoice.view_invoice'
       }
     ]
   },
