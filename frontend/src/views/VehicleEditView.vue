@@ -412,11 +412,11 @@ const handleDeleteImage = async (imageId) => {
     <div v-else>
       <p class="text-red-500 p-4">Error: mainStore no está disponible.</p>
     </div>
-    <SectionTitleLineWithButton :icon="mdiPencil" :title="pageTitle" main style="margin: 1rem;">
+    <SectionTitleLineWithButton :icon="mdiPencil" :title="pageTitle" main style="margin: 2rem;">
       <BaseButton :to="{ name: 'vehicles' }" :icon="mdiArrowLeftCircle" label="Volver a la lista" color="contrast"
         rounded-full small />
     </SectionTitleLineWithButton>
-    <CardBox class="mb-6" is-form @submit.prevent="handleSubmit" style="margin: 1rem;">
+    <CardBox class="mb-6" is-form @submit.prevent="handleSubmit" style="margin: 2rem;">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField label="Placa">
           <FormControl v-model="form.plate" id="plate" required placeholder="Ej: P123XYZ" />

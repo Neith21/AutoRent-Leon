@@ -49,7 +49,7 @@ const routes = [
   {
     meta: { title: 'Crear Vehículo', secure: true, requiredPermission: 'vehicle.add_vehicle' },
     path: '/vehicles/create',
-    name: 'vehicleCreate', 
+    name: 'vehicleCreate',
     component: () => import('@/views/VehicleCreateView.vue'),
   },
   {
@@ -109,6 +109,24 @@ const routes = [
     component: () => import('@/views/RentalCreateView.vue'),
   },
   {
+    meta: { title: 'Facturas', secure: true, requiredPermission: 'invoice.view_invoice' },
+    path: '/invoices',
+    name: 'invoices',
+    component: () => import('@/views/InvoiceView.vue'),
+  },
+  {
+    meta: { title: 'Crear Factura', secure: true, requiredPermission: 'invoice.add_invoice' },
+    path: '/invoices/create',
+    name: 'invoiceCreate',
+    component: () => import('@/views/InvoiceCreateView.vue'),
+  },
+  {
+    meta: {title: 'Perfil de Empresa', secure: true, requiredPermission: 'company.view_company'},
+    path: '/company-profile',
+    name: 'companyProfile',
+    component: () => import('@/views/CompanyProfileView.vue')
+  },
+  {
     meta: {
       title: 'Profile',
       secure: true
@@ -147,9 +165,9 @@ const routes = [
     name: 'error',
     component: () => import('@/views/ErrorView.vue'),
   },
-  { 
-    path: '/:pathMatch(.*)*', 
-    name: 'NotFound', 
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
     component: () => import('@/views/ErrorView.vue'),
     meta: { title: 'Página no encontrada' }
   }
@@ -175,14 +193,14 @@ router.beforeEach(async (to, from, next) => {
       return next({ name: 'login', query: { redirect: to.fullPath } });
     }
     if (authStore.userPermissions === null) {
-        const permissionsLoadedOk = await authStore.fetchUserPermissions();
-        if (!permissionsLoadedOk) {
-            if (!authStore.checkLoggedIn()) {
-                return next({ name: 'login', query: { redirect: to.fullPath } });
-            } else {
-                return next({ name: 'unauthorized', query: { error: 'permissions_unavailable' } });
-            }
+      const permissionsLoadedOk = await authStore.fetchUserPermissions();
+      if (!permissionsLoadedOk) {
+        if (!authStore.checkLoggedIn()) {
+          return next({ name: 'login', query: { redirect: to.fullPath } });
+        } else {
+          return next({ name: 'unauthorized', query: { error: 'permissions_unavailable' } });
         }
+      }
     }
 
     if (to.meta.requiredPermission) {

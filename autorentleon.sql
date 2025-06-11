@@ -444,7 +444,6 @@ INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch
 INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
 (1, 110.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Anticipo', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
-
 -- Alquiler 2: Activo, larga duración (10 días), requiere pago total.
 INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch_id, start_date, end_date, actual_return_date, status, total_price, fuel_level_pickup, fuel_level_return, remarks, active, created_by, created_at, modified_by, updated_at) VALUES
 (2, 1, 2, 1, 2, '2025-06-09 14:00:00', '2025-06-19 14:00:00', NULL, 'Activo', 500.00, '1/2', NULL, 'Pago total recibido por ser más de 5 días de alquiler.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
@@ -464,14 +463,15 @@ INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch
 
 -- Pagos para el alquiler 3.
 INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
+(3, 100.00, 'Tarjeta de Credito', '2025-05-20 09:05:00', 'Anticipo', 'Cargo extra, gasolina', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
 (3, 100.00, 'Tarjeta de Credito', '2025-05-20 09:05:00', 'Anticipo', 'Depósito de seguridad para extranjero', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
 (3, 90.00, 'Tarjeta de Credito', '2025-05-20 09:05:00', 'Anticipo', '50% del costo del alquiler', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
 (3, 90.00, 'Tarjeta de Credito', '2025-05-23 08:50:00', 'Pago Final', 'Pago del 50% restante', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP),
 (3, -100.00, 'Tarjeta de Credito', '2025-05-23 08:55:00', 'Reembolso', 'Devolución de depósito de seguridad', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 -- Factura generada para el alquiler 3 (pagada)
-INSERT INTO invoice (rental_id, invoice_number, issue_date, total_amount, status, active, created_by, created_at, modified_by, updated_at) VALUES
-(3, 'INV-2025-0001', '2025-05-23 09:00:00', 180.00, 'Pagada', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+INSERT INTO invoice (rental_id, invoice_number, issue_date, total_amount, reference, status, active, created_by, created_at, modified_by, updated_at) VALUES
+(3, 'INV-2025-0001', '2025-05-23 09:00:00', 180.00, 'Hola', 'Pagada', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 -- ==================================================
 -- 4. Alquiler ACTIVO para Cliente 2 (John Smith, ID=2)
@@ -486,4 +486,8 @@ INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, ref
 
 INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
 (4, 100.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Depósito', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+
+INSERT INTO company (trade_name, nrc, classification, phone, address, logo, email, website, active, created_by, created_at, modified_by, updated_at, logo_lqip, logo_public_id) VALUES
+('AutoRent León', '123426-7', 'Mediana', '+50322554433', 'Calle La Mascota, #550, San Vicente', 'https://res.cloudinary.com/dmu3idwnm/image/upload/v1749607522/company_logos/ksudrewxhxbubdtvxbne.jpg', 'contacto1@autorentleon.com', 'https://www.autorentleon.com', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP, 'https://res.cloudinary.com/dmu3idwnm/image/upload/w_200/e_blur:100/q_auto:low/v1749607522/company_logos/ksudrewxhxbubdtvxbne.jpg', 'company_logos/ksudrewxhxbubdtvxbne');
 
