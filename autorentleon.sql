@@ -1,5 +1,5 @@
 -- ¡¡¡ IMPORTANTE, PRIMERO CREAR LA BD Y LUEGO HACER LAS MIGRACIONES !!! --
-CREATE DATABASE autorentleon;
+CREATE DATABASE IF NOT EXISTS autorentleon;
 USE autorentleon;
 
 -- ¡¡¡ LUEGO DE HACER LAS MIGRACIONES PROCEDER A INSERTAR SÓLO SI YA SE CREÓ UN SUPERUSUARIO !!! --
@@ -438,12 +438,11 @@ INSERT INTO customer (id, first_name, last_name, document_type, document_number,
 
 -- Alquiler 1: Activo, corta duración (4 días), requiere pago parcial 50%.
 INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch_id, start_date, end_date, actual_return_date, status, total_price, fuel_level_pickup, fuel_level_return, remarks, active, created_by, created_at, modified_by, updated_at) VALUES 
-(1, 1, 1, 1, 1, '2025-06-08 10:00:00', '2025-06-12 10:00:00', NULL, 'Activo', 200.00, 'Lleno', NULL, 'Anticipo del 50% recibido. Vehículo entregado sin detalles.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+(1, 1, 1, 1, 1, '2025-06-08 10:00:00', '2025-06-12 10:00:00', NULL, 'Activo', 220.00, 'Lleno', NULL, 'Anticipo del 50% recibido. Vehículo entregado sin detalles.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 -- Pago de anticipo para el alquiler 1
 INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
-(1, 100.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Anticipo', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
-
+(1, 110.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Anticipo', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 -- Alquiler 2: Activo, larga duración (10 días), requiere pago total.
 INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch_id, start_date, end_date, actual_return_date, status, total_price, fuel_level_pickup, fuel_level_return, remarks, active, created_by, created_at, modified_by, updated_at) VALUES
@@ -474,6 +473,21 @@ INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, ref
 INSERT INTO invoice (rental_id, invoice_number, issue_date, total_amount, reference, status, active, created_by, created_at, modified_by, updated_at) VALUES
 (3, 'INV-2025-0001', '2025-05-23 09:00:00', 180.00, 'Hola', 'Pagada', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
+-- ==================================================
+-- 4. Alquiler ACTIVO para Cliente 2 (John Smith, ID=2)
+-- ==================================================
+
+INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch_id, start_date, end_date, actual_return_date, status, total_price, fuel_level_pickup, fuel_level_return, remarks, active, created_by, created_at, modified_by, updated_at) VALUES 
+(4, 2, 1, 1, 1, '2025-06-08 10:00:00', '2025-06-12 10:00:00', NULL, 'Activo', 220.00, 'Lleno', NULL, 'Anticipo del 50% recibido. Vehículo entregado sin detalles.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+-- Pago de anticipo para el alquiler 1
+INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
+(4, 110.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Anticipo', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
+(4, 100.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Depósito', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+
+
 INSERT INTO company (trade_name, nrc, classification, phone, address, logo, email, website, active, created_by, created_at, modified_by, updated_at, logo_lqip, logo_public_id) VALUES
 ('AutoRent León', '123426-7', 'Mediana', '+50322554433', 'Calle La Mascota, #550, San Vicente', 'https://res.cloudinary.com/dmu3idwnm/image/upload/v1749607522/company_logos/ksudrewxhxbubdtvxbne.jpg', 'contacto1@autorentleon.com', 'https://www.autorentleon.com', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP, 'https://res.cloudinary.com/dmu3idwnm/image/upload/w_200/e_blur:100/q_auto:low/v1749607522/company_logos/ksudrewxhxbubdtvxbne.jpg', 'company_logos/ksudrewxhxbubdtvxbne');
-	
+
