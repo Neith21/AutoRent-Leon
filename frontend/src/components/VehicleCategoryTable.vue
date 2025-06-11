@@ -344,7 +344,7 @@ const exportToExcel = () => {
     </template>
   </CardBoxModal>
 
-  <div class="mb-6 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-0">
+  <div class="mb-6 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-0" style="margin: 1rem;">
     <BaseButton 
         v-if="authStore.hasPermission('vehiclecategory.add_vehiclecategory')"
         color="info" 

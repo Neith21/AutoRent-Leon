@@ -11,7 +11,9 @@ import {
   mdiCarInfo,
   mdiAccountMultiple,
   mdiCarSports,
-  mdiShapePlusOutline
+  mdiShapePlusOutline,
+  mdiInvoiceEditOutline,
+  mdiDomainPlus
 } from '@mdi/js'
 
 export default [
@@ -49,10 +51,28 @@ export default [
     icon: mdiDomain,
     menu: [
       {
+        to: '/company-profile',
+        label: 'Perfil de Empresa',
+        icon: mdiDomainPlus,
+        requiredPermission: 'company.view_company'
+      },
+      {
         to: '/branches',
         label: 'Sucursales',
         icon: mdiSourceBranch,
         requiredPermission: 'branch.view_branch'
+      },
+      {
+        to: '/rentals',
+        label: 'Alquileres',
+        icon: mdiSquareEditOutline,
+        requiredPermission: 'rental.view_rental'
+      },
+      {
+        to: '/invoices/create',
+        label: 'Facturas',
+        icon: mdiInvoiceEditOutline,
+        requiredPermission: 'invoice.view_invoice'
       }
     ]
   },

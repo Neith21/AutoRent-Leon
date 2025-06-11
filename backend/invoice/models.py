@@ -15,14 +15,12 @@ def generate_invoice_number():
     return f"INV-{date_str}-{unique_id}"
 
 class Invoice(models.Model):
-    # --- Choices para el estado de la factura ---
     STATUS_CHOICES = [
         ('Emitida', 'Emitida'),
         ('Pagada', 'Pagada'),
         ('Anulada', 'Anulada'),
     ]
 
-    # --- Relaciones y Campos Principales ---
     rental = models.OneToOneField(
         Rental,
         on_delete=models.CASCADE, # Si se elimina el alquiler, se elimina su factura.
@@ -53,6 +51,11 @@ class Invoice(models.Model):
             'required': "El monto total es obligatorio.",
             'invalid': "Ingrese un monto válido."
         }
+    )
+    reference = models.TextField(
+        blank=True,
+        verbose_name="referencia o código de transacción",
+        help_text="Información adicional (Depósito de seguridad para extranjero, 50% del costo del alquiler, etc.)."
     )
     status = models.CharField(
         max_length=20,
