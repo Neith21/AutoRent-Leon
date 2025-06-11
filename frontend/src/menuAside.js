@@ -12,7 +12,8 @@ import {
   mdiAccountMultiple,
   mdiCarSports,
   mdiShapePlusOutline,
-  mdiInvoiceEditOutline
+  mdiInvoiceEditOutline,
+  mdiDomainPlus
 } from '@mdi/js'
 
 export default [
@@ -49,6 +50,12 @@ export default [
     label: 'Administración',
     icon: mdiDomain,
     menu: [
+      {
+        to: '/company-profile',
+        label: 'Perfil de Empresa',
+        icon: mdiDomainPlus,
+        requiredPermission: 'company.view_company'
+      },
       {
         to: '/branches',
         label: 'Sucursales',

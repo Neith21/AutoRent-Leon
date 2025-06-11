@@ -51,12 +51,23 @@ class Company(models.Model):
         verbose_name="dirección fiscal",
         help_text="Dirección fiscal o principal de la empresa."
     )
-    logo = models.CharField(
-        max_length=100,
+    logo = models.URLField(
+        max_length=255, 
+        blank=True, 
         null=True,
+        verbose_name="URL del Logotipo"
+    )
+    logo_public_id = models.CharField(
+        max_length=100,
         blank=True,
-        verbose_name="logotipo",
-        help_text="Logotipo de la empresa. Se guardará en la carpeta 'company_logos'."
+        null=True,
+        verbose_name="Cloudinary Public ID del Logo"
+    )
+    logo_lqip = models.URLField(
+        max_length=255, 
+        blank=True, 
+        null=True,
+        verbose_name="Logo de Baja Calidad (LQIP)"
     )
     email = models.EmailField(
         max_length=100,
