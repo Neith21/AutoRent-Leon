@@ -8,16 +8,10 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Sum
 from payment.models import Payment
-from payment.serializers import PaymentSerializer as NestedPaymentSerializer
+from payment.serializers import PaymentSerializer as NestedPaymentSerializer # Asegúrate de que esta línea esté correcta
 from customer.models import Customer
 from vehicle.models import Vehicle
-
-# Intenta importar el modelo Invoice. Si no existe, se establece como None.
-try:
-    from invoice.models import Invoice
-except ImportError:
-    Invoice = None 
-
+import pytz
 
 # --- NestedPaymentSerializer (Asegúrate de que este serializer exista y sea correcto) ---
 class NestedPaymentSerializer(serializers.Serializer):
@@ -26,8 +20,43 @@ class NestedPaymentSerializer(serializers.Serializer):
     concept = serializers.CharField(max_length=100, required=False) # Será asignado por el backend en create/update
     reference = serializers.CharField(max_length=255, required=False, allow_blank=True, allow_null=True)
 
+    # AÑADIDO: Método create() para la creación de pagos
+    def create(self, validated_data):
+        # La vista RentalAddPaymentAPIView pasa 'rental' y 'created_by'
+        # directamente a serializer.save() como argumentos.
+        # Estos argumentos se convierten en 'kwargs' para el método create().
+        # No están en 'validated_data' directamente, por eso los sacamos de kwargs.
 
-# --- RentalSerializer Principal con los Cambios (Este no lo modificamos ahora) ---
+        # Extraer los argumentos adicionales que no son parte de los campos del serializer
+        # Usamos .pop() para removerlos de validated_data y evitar errores al crear el Payment.
+        rental = validated_data.pop('rental') 
+        created_by = validated_data.pop('created_by', None) 
+
+        # Crear el objeto Payment
+        payment = Payment.objects.create(
+            rental=rental,
+            amount=validated_data['amount'],
+            payment_type=validated_data['payment_type'],
+            concept=validated_data.get('concept', 'Pago'), 
+            reference=validated_data.get('reference', None),
+            payment_date=timezone.now(), 
+            created_by=created_by,
+            modified_by=created_by 
+        )
+        return payment
+
+    # AÑADIDO: Método update() (vacío por ahora, pero necesario si luego quieres actualizar pagos)
+    def update(self, instance, validated_data):
+        # Generalmente, no se "actualizan" los pagos una vez creados,
+        # pero si lo necesitaras, la lógica iría aquí.
+        # Por ejemplo, para modificar el 'reference' o 'concept' (aunque no el monto).
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+
+
+# --- RentalSerializer Principal (Sin cambios relevantes para este problema, pero incluido por completitud) ---
 class RentalSerializer(serializers.ModelSerializer):
     """
     Serializador para el modelo Rental.
@@ -87,11 +116,9 @@ class RentalSerializer(serializers.ModelSerializer):
             "customer_name",
             "vehicle",
             "vehicle_plate",
-            # Nuevos campos del vehículo
             "vehicle_daily_price",
             "vehicle_make",
             "vehicle_model",
-            # Fin nuevos campos del vehículo
             "pickup_branch",
             "pickup_branch_name",
             "return_branch",
@@ -159,10 +186,6 @@ class RentalSerializer(serializers.ModelSerializer):
         # --- Validaciones de Fechas ---
         if not (start_date and end_date):
             raise serializers.ValidationError("Las fechas de inicio y fin son obligatorias.")
-
-        # Comentar o ajustar esto si quieres permitir crear rentas en el pasado para fines de registro
-        # if start_date < timezone.now() - timedelta(minutes=1):
-        #     raise serializers.ValidationError({"start_date": "La fecha y hora de inicio no puede ser una fecha pasada."})
         
         if end_date <= start_date:
             raise serializers.ValidationError({"end_date": "La fecha y hora de fin debe ser posterior a la fecha de inicio."})
@@ -202,11 +225,6 @@ class RentalSerializer(serializers.ModelSerializer):
         total_rental_price = vehicle.daily_price * decimal.Decimal(str(duration_days))
         data['total_price'] = total_rental_price.quantize(decimal.Decimal('0.01'))
 
-
-        # ***************************************************************
-        # Lógica de Validación y Asignación de Conceptos de Pago
-        # ***************************************************************
-
         # Definir el porcentaje de pago inicial del alquiler
         required_rental_payment_percentage = decimal.Decimal('0.50')
         if duration_days > 5:
@@ -239,10 +257,6 @@ class RentalSerializer(serializers.ModelSerializer):
                     {"payments_input": f"El monto total del pago inicial ({actual_initial_payment_sum}) debe ser exactamente {expected_total_initial_payment}."}
                 )
 
-            # Ya no es necesario asignar `concept` aquí porque la lógica `create` lo hará.
-            # Solo necesitamos asegurarnos de que el `payments_input` sea el que se pasa.
-            # La validación ya ocurrió en el `actual_initial_payment_sum`
-
         # --- Límites de Vehículos Simultáneos por Cliente (Solo en creación) ---
         if is_creating:
             active_rentals_count = Rental.objects.filter(
@@ -273,8 +287,7 @@ class RentalSerializer(serializers.ModelSerializer):
 
         rental = Rental.objects.create(**validated_data)
 
-        # Recalcular los montos esperados (anticipo y depósito) con los datos del rental recién creado
-        # Esto es importante para asegurar que estamos creando los pagos con los montos validados por el backend
+
         customer = rental.customer
         vehicle = rental.vehicle
         start_date = rental.start_date
@@ -357,7 +370,7 @@ class RentalSerializer(serializers.ModelSerializer):
 
 
 # --- RentalFinalizeSerializer (con las correcciones aplicadas) ---
-class RentalFinalizeSerializer(serializers.Serializer):
+class RentalFinalizeSerializer(serializers.Serializer): # Cambiado a Serializer en lugar de ModelSerializer
     rental_id = serializers.IntegerField(read_only=True)
     actual_return_date = serializers.DateTimeField(
         required=True,
@@ -371,9 +384,7 @@ class RentalFinalizeSerializer(serializers.Serializer):
     )
     remarks = serializers.CharField(required=False, allow_blank=True, max_length=500)
     
-    # final_payment es un solo NestedPaymentSerializer (no many=True)
     final_payment = NestedPaymentSerializer(required=False, allow_null=True)
-
 
     def validate(self, data):
         rental = self.context.get('rental')
@@ -387,7 +398,8 @@ class RentalFinalizeSerializer(serializers.Serializer):
         fuel_level_return = data.get('fuel_level_return')
         final_payment_data = data.get('final_payment')
 
-        # 1. Validar el estado actual de la renta
+        el_salvador_tz = pytz.timezone('America/El_Salvador')
+
         if rental.status == 'Finalizado':
             raise serializers.ValidationError({"status": "Este alquiler ya ha sido finalizado."})
         if rental.status == 'Cancelado':
@@ -395,23 +407,23 @@ class RentalFinalizeSerializer(serializers.Serializer):
         if rental.status == 'Pendiente':
             raise serializers.ValidationError({"status": "Este alquiler está Pendiente. No se puede finalizar hasta que esté Activo o Reservado."})
 
-        # 2. Validar actual_return_date
-        if actual_return_date < rental.start_date:
+        actual_return_date_local = actual_return_date.astimezone(el_salvador_tz)
+        rental_start_date_local_tz = rental.start_date.astimezone(el_salvador_tz)
+        
+        if actual_return_date_local < rental_start_date_local_tz:
             raise serializers.ValidationError({"actual_return_date": "La fecha de devolución real no puede ser anterior a la fecha de inicio del alquiler."})
         
-        # Pequeño margen para evitar problemas de microsegundos al comparar con now()
-        if actual_return_date > timezone.now() + timedelta(minutes=1):
+        current_time_in_local_tz = timezone.now().astimezone(el_salvador_tz)
+        if actual_return_date_local > current_time_in_local_tz + timedelta(minutes=1):
             raise serializers.ValidationError({"actual_return_date": "La fecha de devolución real no puede ser una fecha futura."})
 
-        # 3. Calcular Recargos y Cargos por Combustible
         fuel_level_map = {choice[0]: i for i, choice in enumerate(Rental.FUEL_LEVEL_CHOICES)}
         pickup_level = fuel_level_map.get(rental.fuel_level_pickup, 0)
         return_level = fuel_level_map.get(fuel_level_return, 0)
 
         fuel_charge = decimal.Decimal('0.00')
-        FUEL_COST_PER_LEVEL = decimal.Decimal('15.00') # Costo por nivel de combustible faltante
+        FUEL_COST_PER_LEVEL = decimal.Decimal('15.00')
 
-        # Se aplica cargo por combustible si el nivel de retorno es menor que el de recogida
         if return_level < pickup_level:
             fuel_charge = (pickup_level - return_level) * FUEL_COST_PER_LEVEL
         
@@ -419,96 +431,201 @@ class RentalFinalizeSerializer(serializers.Serializer):
 
         overdue_charge = decimal.Decimal('0.00')
         days_overdue = 0
+
+        rental_end_date_local_tz = rental.end_date.astimezone(el_salvador_tz)
         
-        # Lógica de cargo por retraso: ¡Ajustada para que sea idéntica al frontend!
-        # Si la fecha de retorno real es posterior a la fecha de finalización esperada
-        if actual_return_date > rental.end_date:
-            # Calcular la diferencia en horas y luego en días, redondeando hacia arriba para cualquier fracción de día
-            diff_hours = (actual_return_date - rental.end_date).total_seconds() / (60 * 60)
+        if actual_return_date_local > rental_end_date_local_tz:
+            
+            diff_time = actual_return_date_local - rental_end_date_local_tz
+
+            diff_hours = diff_time.total_seconds() / (60 * 60)
             raw_days_overdue = math.ceil(diff_hours / 24)
 
-            # Asegurar que incluso un retraso de pocas horas se cuente como 1 día
             if raw_days_overdue <= 0 and diff_hours > 0:
                 raw_days_overdue = 1
 
-            days_overdue = raw_days_overdue # Guardamos los días reales de retraso
+            days_overdue = raw_days_overdue
 
             daily_price = rental.vehicle.daily_price
 
             if days_overdue <= 3:
-                # Días 1 a 3: Tarifa diaria normal por cada día
                 overdue_charge = daily_price * days_overdue
             elif days_overdue > 3 and days_overdue <= 7:
-                # Días 4 a 7: Doble de la tarifa diaria por cada día en este rango
-                overdue_charge = daily_price * days_overdue * 2
-            else: # Más de 7 días de retraso: el cargo se mantiene como si fueran 7 días (con tarifa doble)
-                overdue_charge = daily_price * 7 * 2
+                overdue_acu = daily_price * 3
+                overdue_charge = overdue_acu + (daily_price * (days_overdue - 3) * 2)
+            else: # Más de 7 días
+                overdue_acu = daily_price * 3
+                overdue_charge = overdue_acu + (daily_price * (7 - 3) * 2)
         
         data['calculated_overdue_charge'] = overdue_charge.quantize(decimal.Decimal('0.01'))
-        data['days_overdue'] = days_overdue # Los días reales de retraso
+        data['days_overdue'] = days_overdue
 
-        # Recalculamos el costo original de la renta sin el depósito para asegurar la base correcta.
-        # Esto considera la duración original de la renta para el cálculo base.
-        rental_duration_days_initial = (rental.end_date.date() - rental.start_date.date()).days
-        if rental.start_date.date() != rental.end_date.date() and (rental.end_date.hour > rental.start_date.hour or (rental.end_date.hour == rental.start_date.hour and rental.end_date.minute > rental.start_date.minute)):
-            rental_duration_days_initial += 1
-        elif rental.start_date.date() == rental.end_date.date() and (rental.end_date.total_seconds() - rental.start_date.total_seconds() > 0):
-            rental_duration_days_initial = 1
-        
-        total_original_rental_cost = (rental.vehicle.daily_price * decimal.Decimal(str(rental_duration_days_initial))).quantize(decimal.Decimal('0.01'))
+        total_original_rental_cost = rental.total_price 
+        if not isinstance(total_original_rental_cost, decimal.Decimal):
+            total_original_rental_cost = decimal.Decimal(str(total_original_rental_cost)).quantize(decimal.Decimal('0.01'))
 
-        # total_amount_to_cover es el monto que el cliente *debe* por el servicio de alquiler y penalidades
+        # Total que se debe cubrir por el alquiler, cargos por atraso y combustible
         total_amount_to_cover = (total_original_rental_cost + overdue_charge + fuel_charge).quantize(decimal.Decimal('0.01'))
-
-        # Monto total de pagos recibidos HASTA AHORA (sin el pago final de esta solicitud)
-        # Filtrar solo los pagos que corresponden al servicio de alquiler, NO los depósitos.
+        
+        # Pagos existentes por conceptos de servicio (anticipo, pago final, cargos adicionales)
+        # Excluye depósitos y reembolsos de este cálculo inicial
         paid_for_rental_only = Payment.objects.filter(
             rental=rental,
-            concept__in=['Anticipo', 'Pago Final', 'Cargo Adicional', 'Cargo por Retraso']
+            concept__in=['Anticipo', 'Pago Final', 'Cargo Adicional', 'Cargo por Retraso'] 
         ).aggregate(total=Sum('amount'))['total'] or decimal.Decimal('0.00')
 
-        # Verificar si ya se recibió un depósito de garantía para este alquiler (solo para extranjeros)
+        # Depósito de garantía real recibido (monto que existe en BD, será 0 para nacionales si no lo pagaron)
         deposit_received_amount = decimal.Decimal('0.00')
-        # Buscar SÓLO pagos con concepto 'Depósito'
         deposit_payment = Payment.objects.filter(rental=rental, concept='Depósito').first()
         if deposit_payment:
             deposit_received_amount = deposit_payment.amount
 
-        # Monto del pago que se está realizando en esta solicitud de finalización
-        current_payment_in_request = final_payment_data.get('amount', decimal.Decimal('0.00')) if final_payment_data else decimal.Decimal('0.00')
+        # Monto del pago que viene en la solicitud actual (si aplica)
+        current_payment_in_request_amount = decimal.Decimal('0.00')
+        payment_concept = None
+        if final_payment_data and final_payment_data.get('amount') is not None:
+            current_payment_in_request_amount = decimal.Decimal(str(final_payment_data.get('amount'))).quantize(decimal.Decimal('0.01'))
+            payment_concept = final_payment_data.get('concept')
         
-        # Total pagado por el cliente *solo por el servicio de alquiler y cargos*, incluyendo el pago actual
-        total_paid_by_customer_for_service = (paid_for_rental_only + current_payment_in_request).quantize(decimal.Decimal('0.01'))
+        # Determine si el cliente es extranjero
+        is_foreign_customer = False
+        if hasattr(rental.customer, 'customer_type') and rental.customer.customer_type and rental.customer.customer_type.lower() == 'extranjero':
+            is_foreign_customer = True
+
+        DEPOSIT_AMOUNT_FOREIGNER = decimal.Decimal('100.00') # El valor fijo para depósitos de extranjeros
+
+        # --- CÁLCULO INICIAL DEL SALDO PENDIENTE (ANTES DE APLICAR EL PAGO ACTUAL O DEPÓSITO) ---
+        # Este es el monto que realmente se debe por el servicio, sin incluir aún el pago que viene en el request
+        # ni el crédito del depósito de extranjero.
+        balance_owed_for_service_before_current_payment = (total_amount_to_cover - paid_for_rental_only).quantize(decimal.Decimal('0.01'))
         
-        # Saldo pendiente real (lo que debe por el servicio - lo que ha pagado por el servicio)
-        remaining_balance_for_service = (total_amount_to_cover - total_paid_by_customer_for_service).quantize(decimal.Decimal('0.01'))
+        total_calculated_refund_amount = decimal.Decimal('0.00') # Inicializar para todos los flujos
 
-        # Validar si el pago final es insuficiente si hay un saldo pendiente positivo
-        if remaining_balance_for_service > decimal.Decimal('0.00'):
-            # El pago actual debe cubrir al menos el saldo pendiente si se envía un pago
-            # O si no se envía un pago, y hay saldo pendiente, entonces es un error
-            if not final_payment_data or current_payment_in_request < remaining_balance_for_service:
-                raise serializers.ValidationError({
-                    "final_payment": f"El monto del pago es insuficiente. Quedan ${remaining_balance_for_service:.2f} pendientes por el servicio de alquiler y cargos. Por favor, ajuste el pago final."
-                })
-        
-        # Si hay sobrepago o balance negativo, el sistema ahora debe calcular el reembolso.
-        # Esto incluye cualquier sobrepago del servicio MÁS el depósito de garantía si aplica.
-        total_refund_amount = decimal.Decimal('0.00')
-        if remaining_balance_for_service < decimal.Decimal('0.00'):
-            total_refund_amount += abs(remaining_balance_for_service) # Sobrepago del servicio
+        # --- VALIDACIÓN DEL PAGO FINAL / CÁLCULO DE REEMBOLSO ---
+        if final_payment_data:
+            # Si el pago que viene es un reembolso, validamos contra el monto calculable
+            if payment_concept == 'Reembolso':
+                # Calcular el monto total disponible para reembolso.
+                # Considerar el balance del servicio y el depósito.
+                # Si el servicio ya está pagado (balance_owed_for_service_before_current_payment <= 0)
+                # y el cliente es extranjero, los $100 se reembolsan.
+                # Si el servicio ya está pagado (balance_owed_for_service_before_current_payment <= 0)
+                # y el cliente es nacional, se reembolsa su depósito (que puede ser 0).
+                
+                # Primero, el reembolso potencial por sobrepago de servicio existente
+                if balance_owed_for_service_before_current_payment < decimal.Decimal('0.00'):
+                    total_calculated_refund_amount += abs(balance_owed_for_service_before_current_payment)
+                
+                # Luego, el reembolso del depósito si el servicio está cubierto
+                # Esto es: si no hay deuda de servicio O si la deuda existente puede ser cubierta por el depósito de extranjero
+                # Para extranjeros, el depósito SIEMPRE se reembolsa si el servicio está cubierto.
+                # Para nacionales, se reembolsa el deposit_received_amount si el servicio está cubierto.
+                effective_balance_after_deposit_credit = balance_owed_for_service_before_current_payment
 
-        # El depósito de garantía SIEMPRE se suma al reembolso si el servicio está cubierto.
-        # Es decir, si el remaining_balance_for_service es cero o negativo (ya no se debe nada por el servicio).
-        # Y solo si el depósito realmente se recibió
-        if deposit_received_amount > decimal.Decimal('0.00') and remaining_balance_for_service <= decimal.Decimal('0.00'):
-            total_refund_amount += deposit_received_amount 
+                if is_foreign_customer:
+                    effective_balance_after_deposit_credit = balance_owed_for_service_before_current_payment - DEPOSIT_AMOUNT_FOREIGNER
+                
+                if effective_balance_after_deposit_credit < decimal.Decimal('0.00'):
+                    # Si después de aplicar el depósito (para extranjero) o si el servicio ya estaba sobrepagado,
+                    # hay un saldo negativo, ese es un monto a reembolsar.
+                    total_calculated_refund_amount += abs(effective_balance_after_deposit_credit)
+                
+                # Para Nacionales, si el servicio está cubierto (balance_owed_for_service_before_current_payment <= 0)
+                # y tienen un depósito (deposit_received_amount > 0), se les reembolsa.
+                # NOTA: Aquí separamos para no sumar el depósito si ya se manejó en effective_balance_after_deposit_credit
+                # (que sería el caso para extranjeros que usaron el depósito para cubrir deuda).
+                if not is_foreign_customer and balance_owed_for_service_before_current_payment <= decimal.Decimal('0.00') and deposit_received_amount > decimal.Decimal('0.00'):
+                    total_calculated_refund_amount += deposit_received_amount
 
+
+                if total_calculated_refund_amount <= decimal.Decimal('0.00'):
+                     raise serializers.ValidationError({"final_payment": "No hay monto pendiente para reembolsar."})
+                
+                if current_payment_in_request_amount > total_calculated_refund_amount: 
+                    raise serializers.ValidationError(
+                        {"final_payment": f"El monto del reembolso excede el total a reembolsar. Monto máximo a reembolsar: ${total_calculated_refund_amount:.2f}."}
+                    )
+                # Convertir el monto a negativo para almacenarlo en la base de datos como un reembolso
+                data['final_payment']['amount'] = -current_payment_in_request_amount
+                
+                # Una vez que se procesa un reembolso explícito, el saldo pendiente queda en 0
+                remaining_balance_for_service = decimal.Decimal('0.00')
+
+            # Si el pago es un monto POSITIVO (un pago normal, no un reembolso)
+            else: 
+                # Saldo que el cliente aún debe por el servicio (sin considerar el pago actual del request)
+                debt_after_existing_payments = balance_owed_for_service_before_current_payment
+
+                if debt_after_existing_payments > decimal.Decimal('0.00'): # Si aún hay deuda de servicio
+                    amount_to_check_against_debt = current_payment_in_request_amount
+                    if is_foreign_customer:
+                        amount_to_check_against_debt += DEPOSIT_AMOUNT_FOREIGNER # El depósito de $100 se usa como crédito
+                    
+                    if amount_to_check_against_debt < debt_after_existing_payments:
+                        amount_missing = debt_after_existing_payments - amount_to_check_against_debt
+                        error_message = f"El monto del pago es insuficiente. Quedan ${amount_missing:.2f} pendientes por el servicio de alquiler y cargos."
+                        if is_foreign_customer:
+                            error_message += " (Considerando el uso de su depósito de $100)."
+                        raise serializers.ValidationError({"final_payment": error_message + " Por favor, ajuste el pago final."})
+                    
+                    # Si el pago actual + (depósito extranjero si aplica) cubre o sobrepasa la deuda
+                    if amount_to_check_against_debt >= debt_after_existing_payments:
+                        overpayment_from_service_and_deposit = amount_to_check_against_debt - debt_after_existing_payments
+                        total_calculated_refund_amount = overpayment_from_service_and_deposit
+                        remaining_balance_for_service = decimal.Decimal('0.00') # La deuda de servicio queda en 0
+                else: # Si el servicio ya estaba cubierto o sobrepagado ANTES del pago actual
+                    # Si el servicio ya está cubierto, cualquier pago adicional es un sobrepago a reembolsar
+                    total_calculated_refund_amount += abs(debt_after_existing_payments) # Cualquier sobrepago existente
+                    total_calculated_refund_amount += current_payment_in_request_amount # El pago actual
+                    
+                    # Además, si el servicio ya estaba cubierto, y es extranjero, se reembolsa el depósito fijo
+                    if is_foreign_customer and deposit_received_amount == DEPOSIT_AMOUNT_FOREIGNER:
+                        total_calculated_refund_amount += DEPOSIT_AMOUNT_FOREIGNER
+                    # Si es nacional y el servicio ya está cubierto, y tiene depósito, se reembolsa
+                    elif not is_foreign_customer and deposit_received_amount > decimal.Decimal('0.00'):
+                        total_calculated_refund_amount += deposit_received_amount
+
+                    remaining_balance_for_service = decimal.Decimal('0.00')
+
+        # --- Si NO se envió un pago final (final_payment_data is None) ---
+        else:
+            # Calcular el reembolso potencial si no hay un pago final, para validación
+            effective_balance_at_finalization = balance_owed_for_service_before_current_payment # Deuda sin el pago actual
+
+            if is_foreign_customer:
+                effective_balance_at_finalization -= DEPOSIT_AMOUNT_FOREIGNER # Restamos el crédito de $100
+
+            if effective_balance_at_finalization < decimal.Decimal('0.00'):
+                total_calculated_refund_amount += abs(effective_balance_at_finalization)
+            
+            # Para nacionales, si el servicio está cubierto, el depósito real es reembolso
+            if not is_foreign_customer and balance_owed_for_service_before_current_payment <= decimal.Decimal('0.00') and deposit_received_amount > decimal.Decimal('0.00'):
+                total_calculated_refund_amount += deposit_received_amount
+
+
+            if balance_owed_for_service_before_current_payment > decimal.Decimal('0.00') and effective_balance_at_finalization > decimal.Decimal('0.00'):
+                # Si el saldo de servicio (sin depósito) es positivo Y aún lo es con el crédito de depósito
+                raise serializers.ValidationError(
+                    {"final_payment": f"No se proporcionó un pago final, y aún quedan ${effective_balance_at_finalization:.2f} pendientes por el servicio de alquiler y cargos."}
+                )
+            elif total_calculated_refund_amount > decimal.Decimal('0.00'):
+                raise serializers.ValidationError(
+                    {"final_payment": f"Existe un monto de ${total_calculated_refund_amount:.2f} a reembolsar, pero no se proporcionó información de pago final."}
+                )
+            
+            # Si no hay pago final y no hay deuda, ni reembolso pendiente, el saldo final es 0
+            remaining_balance_for_service = decimal.Decimal('0.00')
+
+
+        # Si el proceso llega aquí, las validaciones pasaron
+        # Se almacenan las variables calculadas en `data` para el método `save`
         data['total_amount_to_cover'] = total_amount_to_cover
-        data['total_paid_by_customer_for_service'] = total_paid_by_customer_for_service
-        data['remaining_balance_for_service'] = remaining_balance_for_service
-        data['deposit_received_amount'] = deposit_received_amount # Añadir esto para mostrar en el frontend si es necesario
-        data['total_refund_amount'] = total_refund_amount.quantize(decimal.Decimal('0.01')) # Asegura el formato decimal
+        data['total_paid_for_service_excluding_current_payment'] = paid_for_rental_only # Solo pagos anteriores
+        data['remaining_balance_for_service_final'] = remaining_balance_for_service # Saldo final, debe ser 0 si se cubrió
+        data['deposit_received_amount'] = deposit_received_amount 
+        data['total_calculated_refund_amount'] = total_calculated_refund_amount.quantize(decimal.Decimal('0.01'))
+        data['is_foreign_customer'] = is_foreign_customer # Guardar para save method
+
 
         return data
 
@@ -520,37 +637,33 @@ class RentalFinalizeSerializer(serializers.Serializer):
         remarks = self.validated_data.get('remarks')
         final_payment_data = self.validated_data.get('final_payment')
 
-        calculated_overdue_charge = self.validated_data['calculated_overdue_charge']
-        calculated_fuel_charge = self.validated_data['calculated_fuel_charge']
+        # Estos valores ya vienen calculados del método validate
         total_amount_to_cover = self.validated_data['total_amount_to_cover']
-        total_refund_amount = self.validated_data['total_refund_amount'] 
-        remaining_balance_for_service = self.validated_data['remaining_balance_for_service']
-        deposit_received_amount = self.validated_data['deposit_received_amount'] # Recuperar el monto del depósito
+        total_calculated_refund_amount = self.validated_data['total_calculated_refund_amount'] 
+        remaining_balance_for_service_final = self.validated_data['remaining_balance_for_service_final'] # Este es el saldo final, que debe ser 0
+        deposit_received_amount = self.validated_data['deposit_received_amount']
+        is_foreign_customer = self.validated_data['is_foreign_customer'] # Usar en save method
+
 
         user_id = kwargs.get('modified_by', None)
         if user_id:
             rental.modified_by = user_id
 
-        # 1. Actualizar campos de la renta
         rental.actual_return_date = actual_return_date
         rental.fuel_level_return = fuel_level_return
         rental.remarks = remarks
         
-        # El total_price del alquiler en el modelo debe reflejar el costo real de la renta más cargos.
+        # total_price de la renta ahora reflejará el costo total original + cargos por atraso y combustible
         rental.total_price = total_amount_to_cover
 
-        # Determinar el payment_type base para los nuevos registros de pagos/cargos
-        # Si viene un final_payment, usar su tipo. Si no, un valor por defecto (ej. 'Efectivo')
         base_payment_type = final_payment_data.get('payment_type', 'Efectivo') if final_payment_data else 'Efectivo'
 
-        # 2. Registrar el pago final si se envió y hay un monto y es necesario
-        # Se registra un pago final SÓLO si el saldo restante para el servicio es positivo y el pago lo cubre
-        # o si el pago recibido en esta transacción es positivo y no se ha cubierto el servicio aún.
-        if final_payment_data and final_payment_data.get('amount', 0) > 0 and remaining_balance_for_service > decimal.Decimal('0.00'):
-            # Evitar duplicar el "Pago Final"
+        # 1. Registrar el pago final si se envió y es un monto positivo (no un reembolso)
+        if final_payment_data and final_payment_data.get('amount', 0) > 0:
+            # Verifica si ya se hizo un pago con el mismo monto y concepto para evitar duplicados.
             if not Payment.objects.filter(
                 rental=rental,
-                concept='Pago Final',
+                concept=final_payment_data['concept'], 
                 amount=final_payment_data['amount'],
                 payment_type=final_payment_data.get('payment_type', 'Efectivo')
             ).exists():
@@ -558,125 +671,71 @@ class RentalFinalizeSerializer(serializers.Serializer):
                     rental=rental,
                     amount=final_payment_data['amount'],
                     payment_type=final_payment_data.get('payment_type', 'Efectivo'),
-                    concept='Pago Final',
+                    concept=final_payment_data.get('concept', 'Pago Final'), 
                     reference=final_payment_data.get('reference', f"Pago final Renta #{rental.id}"),
                     payment_date=timezone.now(),
                     created_by=user_id,
                     modified_by=user_id
                 )
 
-        # 3. Manejo de cargos adicionales por mora y combustible
-        # Estos se registran como pagos para reflejar los montos que el cliente debe/pagó por estos conceptos.
-        # Usaremos el base_payment_type para estos registros.
-        if calculated_overdue_charge > 0:
-            # Si ya existe un pago por este concepto y monto exacto, no crear duplicado.
-            # Esto previene errores en reintentos.
-            if not Payment.objects.filter(
-                rental=rental, 
-                concept='Cargo por Retraso', 
-                amount=calculated_overdue_charge,
-                payment_type=base_payment_type # Importante: Usar el tipo de pago del frontend
-            ).exists():
-                Payment.objects.create(
-                    rental=rental,
-                    amount=calculated_overdue_charge,
-                    payment_type=base_payment_type, # Se usa el tipo de pago proporcionado por el frontend
-                    concept='Cargo por Retraso',
-                    reference=f"Recargo por demora Renta #{rental.id}",
-                    payment_date=timezone.now(),
-                    created_by=user_id,
-                    modified_by=user_id
-                )
-        
-        if calculated_fuel_charge > 0:
-            # Si ya existe un pago por este concepto y monto exacto, no crear duplicado.
-            if not Payment.objects.filter(
-                rental=rental, 
-                concept='Cargo Adicional', 
-                amount=calculated_fuel_charge,
-                payment_type=base_payment_type # Importante: Usar el tipo de pago del frontend
-            ).exists():
-                Payment.objects.create(
-                    rental=rental,
-                    amount=calculated_fuel_charge,
-                    payment_type=base_payment_type, # Se usa el tipo de pago proporcionado por el frontend
-                    concept='Cargo Adicional', # Usando 'Cargo Adicional' para combustible
-                    reference=f"Cargo por combustible Renta #{rental.id}",
-                    payment_date=timezone.now(),
-                    created_by=user_id,
-                    modified_by=user_id
-                )
+        # 2. Manejo del reembolso (si el `total_calculated_refund_amount` es mayor a 0)
+        # Esto creará el Payment del reembolso automáticamente si no se pasó ya como final_payment
+        if total_calculated_refund_amount > decimal.Decimal('0.00'):
+            # Si el final_payment_data es un reembolso y el monto coincide, ya se creó, no duplicar
+            is_refund_payment_already_in_request = (
+                final_payment_data and 
+                final_payment_data['concept'] == 'Reembolso' and 
+                abs(final_payment_data['amount']) == total_calculated_refund_amount
+            )
 
-        # 4. Manejo del reembolso (si el `total_refund_amount` es mayor a 0)
-        if total_refund_amount > decimal.Decimal('0.00'):
-            refund_concept = 'Reembolso'
-            refund_reference = f"Reembolso Alquiler #{rental.id}"
-            
-            is_foreigner = rental.customer.customer_type.lower() == 'extranjero'
-            if is_foreigner and deposit_received_amount == decimal.Decimal('100.00') and total_refund_amount >= decimal.Decimal('100.00'):
-                refund_concept = 'Reembolso de Depósito Extranjero'
-                refund_reference = f"Reembolso de Depósito Extranjero Renta #{rental.id}"
-            elif deposit_received_amount > decimal.Decimal('0.00'):
-                refund_concept = 'Reembolso de Depósito'
-                refund_reference = f"Reembolso de Depósito Renta #{rental.id}"
+            if not is_refund_payment_already_in_request:
+                refund_concept = 'Reembolso' 
+                refund_reference_detail = ""
+                
+                # Determinar el detalle específico para el campo 'reference'
+                # La lógica aquí es más compleja para determinar el origen del reembolso.
+                # Podría ser:
+                # - El servicio fue sobrepagado (e.g., balance_owed_for_service_before_current_payment < 0)
+                # - El depósito extranjero se usó para cubrir y sobró.
+                # - El depósito nacional se devuelve.
 
-            # Verifica si ya se hizo un reembolso con el mismo monto y concepto para evitar duplicados.
-            if not Payment.objects.filter(
-                rental=rental,
-                concept=refund_concept,
-                amount=total_refund_amount * -1 # Se verifica el monto negativo
-            ).exists(): 
-                Payment.objects.create(
+                # Una manera más robusta de determinar el origen sería guardarlo en `validate`
+                # Por ahora, una aproximación:
+                if is_foreign_customer and deposit_received_amount == decimal.Decimal('100.00') and total_calculated_refund_amount >= decimal.Decimal('100.00'):
+                    refund_reference_detail = 'Depósito Extranjero y/o Sobrepago'
+                elif deposit_received_amount > decimal.Decimal('0.00') and total_calculated_refund_amount >= deposit_received_amount:
+                     refund_reference_detail = 'Depósito Nacional y/o Sobrepago'
+                else:
+                    refund_reference_detail = 'Sobrepago del servicio' # Por defecto si no encaja en las anteriores
+                
+                refund_reference = f"Reembolso de {refund_reference_detail} Renta #{rental.id}"
+
+
+                # Verifica si ya se hizo un reembolso con el mismo monto y concepto para evitar duplicados.
+                # Se busca por el valor absoluto del monto, ya que en la BD se guarda como negativo.
+                if not Payment.objects.filter(
                     rental=rental,
-                    amount=total_refund_amount * -1, # Monto negativo para indicar reembolso
-                    payment_type=base_payment_type, # Se usa el tipo de pago proporcionado por el frontend
-                    payment_date=timezone.now(),
-                    concept=refund_concept,
-                    reference=refund_reference,
-                    created_by=user_id,
-                    modified_by=user_id
-                )
+                    concept=refund_concept, 
+                    amount=total_calculated_refund_amount * -1 
+                ).exists(): 
+                    Payment.objects.create(
+                        rental=rental,
+                        amount=total_calculated_refund_amount * -1, # Monto negativo para indicar reembolso
+                        payment_type=base_payment_type, # Puede que quieras un tipo de pago específico para reembolsos
+                        payment_date=timezone.now(),
+                        concept=refund_concept, 
+                        reference=refund_reference, 
+                        created_by=user_id,
+                        modified_by=user_id
+                    )
 
-        # 5. Actualizar el estado de la renta a 'Finalizado'
+        # 3. Actualizar el estado de la renta a 'Finalizado'
         rental.status = 'Finalizado'
 
-        # 6. Actualizar el estado del vehículo
-        rental.vehicle.status = 'Disponible'
+        # 4. Actualizar el estado del vehículo
+        rental.vehicle.status = 'Disponible' 
         rental.vehicle.save()
 
         rental.save()
-
-        # 7. Manejo de Factura (si el modelo Invoice existe y el saldo está cubierto)
-        if Invoice: # Verifica si la clase Invoice se importó correctamente
-            try:
-                # Si no hay factura asociada y el balance es cero o negativo (cubierto)
-                if not hasattr(rental, 'invoice') and remaining_balance_for_service <= decimal.Decimal('0.00'):
-                    latest_invoice = Invoice.objects.order_by('-id').first()
-                    new_invoice_number = "INV00001"
-                    if latest_invoice and latest_invoice.invoice_number.startswith('INV'):
-                        try:
-                            last_num = int(latest_invoice.invoice_number[3:])
-                            new_invoice_number = f"INV{last_num + 1:05d}"
-                        except ValueError:
-                            # Fallback si el número no es el formato esperado
-                            new_invoice_number = f"INV{Invoice.objects.count() + 1:05d}"
-                    
-                    Invoice.objects.create(
-                        rental=rental,
-                        invoice_number=new_invoice_number,
-                        issue_date=timezone.now(),
-                        total_amount=rental.total_price, # Usar el total_price ya actualizado con cargos
-                        status='emitida',
-                        created_by=user_id
-                    )
-                # Si ya hay una factura y el balance es cero o negativo, y la factura no está pagada, actualizarla a 'pagada'
-                elif hasattr(rental, 'invoice') and remaining_balance_for_service <= decimal.Decimal('0.00') and rental.invoice.status != 'pagada':
-                    rental.invoice.status = 'pagada'
-                    rental.invoice.modified_by = user_id
-                    rental.invoice.save()
-            except Exception as e:
-                # Captura cualquier error en la creación/actualización de la factura
-                print(f"Error al manejar la factura para la renta {rental.id}: {e}")
-
-                pass # Se mantiene el `pass` para que no detenga la transacción principal
+        
         return rental

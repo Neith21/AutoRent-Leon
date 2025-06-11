@@ -534,7 +534,7 @@ onMounted(async () => {
                 @click="openFinalizeModal(rental)" title="Finalizar Alquiler"
               />
               <BaseButton
-                v-if="rental.active && rental.status !== 'Finalizado' && rental.status !== 'Cancelado' && authStore.hasPermission('rental.add_payment')"
+                v-if="authStore.hasPermission('rental.view_payment')"
                 :icon="mdiCashMultiple"
                 color="warning"
                 small
