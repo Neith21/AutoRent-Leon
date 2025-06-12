@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import RegexValidator
+from simple_history.models import HistoricalRecords
 
 class Brand(models.Model):
     name = models.CharField(
@@ -24,6 +25,8 @@ class Brand(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="fecha de creación")
     modified_by = models.IntegerField(null=True, blank=True, verbose_name="modificado por")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="última modificación")
+
+    history = HistoricalRecords(inherit=True)
 
     class Meta:
         db_table = 'brand'

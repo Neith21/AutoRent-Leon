@@ -407,7 +407,7 @@ onMounted(async () => {
     :rental="rentalToFinalize" @update:show="closeFinalizeModal" @rentalFinalized="handleRentalUpdate" />
 
 
-  <div class="mb-6 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-0">
+  <div class="mb-6 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-0" style="margin: 1rem;">
     <BaseButton
       v-if="authStore.hasPermission('rental.add_rental')"
       color="info"
@@ -428,7 +428,7 @@ onMounted(async () => {
   </div>
 
   <div class="overflow-x-auto shadow-md sm:rounded-lg px-4 md:px-0">
-    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400" >
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
         <tr>
           <th scope="col" class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-400">

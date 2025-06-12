@@ -8,6 +8,7 @@ from .models import VehicleCategory
 from .serializers import VehicleCategorySerializer
 from .forms import VehicleCategoryForm
 from utilities.decorators import authenticate_user
+from error_log import utils as error_log_utils
 
 
 # Create your views here.
@@ -22,6 +23,7 @@ class VehicleCategoryRC(APIView):
             serializer = VehicleCategorySerializer(categories, many=True)
             return JsonResponse({"data": serializer.data}, status=HTTPStatus.OK)
         except Exception as e:
+            error_log_utils.log_error(user=request.user, exception=e)
             return JsonResponse(
                 {"status": "error", "message": f"Ocurrió un error al procesar la solicitud: {e}"},
                 status=HTTPStatus.INTERNAL_SERVER_ERROR
@@ -34,6 +36,7 @@ class VehicleCategoryRC(APIView):
         try:
             data_for_form = json.loads(request.body)
         except json.JSONDecodeError:
+            error_log_utils.log_error(user=request.user, exception="Invalid JSON body in request")
             return JsonResponse(
                 {"status": "error", "message": "Cuerpo de la solicitud inválido."},
                 status=HTTPStatus.BAD_REQUEST
@@ -55,6 +58,7 @@ class VehicleCategoryRC(APIView):
                     "data": serializer.data
                 }, status=HTTPStatus.CREATED)
             except Exception as e:
+                error_log_utils.log_error(user=request.user, exception=e)
                 return JsonResponse({
                     "status": "error",
                     "message": f"Error interno al guardar la categoría: {str(e)}"
@@ -103,6 +107,7 @@ class VehicleCategoryRU(APIView):
         try:
             payload_data = json.loads(request.body)
         except json.JSONDecodeError:
+            error_log_utils.log_error(user=request.user, exception="Invalid JSON body in request")
             return JsonResponse(
                 {"status": "error", "message": "Se esperaba un cuerpo JSON con los datos a actualizar."},
                 status=HTTPStatus.BAD_REQUEST
@@ -121,6 +126,7 @@ class VehicleCategoryRU(APIView):
                         "message": "Categoría actualizada exitosamente."
                     }, status=HTTPStatus.OK)
                 except Exception as e:
+                    error_log_utils.log_error(user=request.user, exception=e)
                     return JsonResponse({
                         "status": "error",
                         "message": f"Error interno al actualizar la categoría: {str(e)}"
@@ -179,6 +185,7 @@ class VehicleCategoryD(APIView):
                 "message": "Categoría desactivada exitosamente."
             }, status=HTTPStatus.OK)
         except Exception as e:
+            error_log_utils.log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": f"Error inesperado al desactivar la categoría: {str(e)}"

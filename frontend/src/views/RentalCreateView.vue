@@ -56,6 +56,7 @@ const calculatedTotalDueAtStart = ref('0.00'); // Corresponde a 'total_amount_du
 const estimatedDurationDays = ref(0);
 const estimatedVehicleDailyRate = ref('0.00');
 const estimatedPaymentPercentage = ref(0);
+const estimatedCustomerActiveRentals = ref(0);
 
 const showPriceDetails = ref(false);
 
@@ -243,6 +244,7 @@ const calculateRentalPrice = async () => {
             calculatedRequiredInitialRentalPayment.value = data.required_initial_rental_payment;
             calculatedDepositRequired.value = data.deposit_required;
             calculatedTotalDueAtStart.value = data.total_amount_due_at_start; // Este es el valor clave
+            estimatedCustomerActiveRentals.value = data.active_rentals_count || 0;
 
             // Calcular y mostrar duración y tarifa diaria en el frontend
             const startDateObj = new Date(start_date);
@@ -760,7 +762,7 @@ onMounted(async () => {
                     <span class="font-medium">Precio Total Estimado:</span> ${{ parseFloat(calculatedTotalPrice).toFixed(2) }}
                 </p>
                 <p class="text-sm mt-1">
-                    <span class="font-medium">Pago Inicial Sugerido ({{ estimatedPaymentPercentage }}%):</span> ${{ parseFloat(calculatedRequiredInitialPayment).toFixed(2) }}
+                    <span class="font-medium">Pago Inicial Sugerido ({{ estimatedPaymentPercentage }}%):</span> ${{ parseFloat(calculatedRequiredInitialRentalPayment).toFixed(2) }}
                 </p>
                 <p v-if="parseFloat(calculatedDepositRequired) > 0" class="text-sm mt-1">
                     <span class="font-medium">Depósito de Garantía Sugerido:</span> ${{ parseFloat(calculatedDepositRequired).toFixed(2) }} (para clientes extranjeros)
