@@ -6,6 +6,7 @@ from django.utils import timezone
 from vehiclemodel.models import VehicleModel
 from vehiclecategory.models import VehicleCategory
 from branch.models import Branch
+from simple_history.models import HistoricalRecords
 
 def get_next_year():
     return timezone.now().year + 1
@@ -205,6 +206,8 @@ class Vehicle(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="fecha de creación")
     modified_by = models.IntegerField(null=True, blank=True, verbose_name="modificado por")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="última modificación")
+
+    history = HistoricalRecords(inherit=True)
 
     class Meta:
         db_table = 'vehicle'

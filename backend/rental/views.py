@@ -369,6 +369,55 @@ class RentalCalculatePriceAPIView(APIView):
                 except Exception as calc_error:
                     errors.append(f"Error durante el cálculo del precio: {str(calc_error)}")
 
+        if not errors:
+            if vehicle.daily_price is None or vehicle.daily_price <= 0:
+                errors.append("El precio diario del vehículo es inválido o no está configurado.")
+
+            customer_type_normalized = customer.customer_type.lower() if customer.customer_type else ''
+
+            if customer_type_normalized not in ['nacional', 'extranjero']:
+                errors.append("El tipo de cliente es desconocido.")
+
+            if not errors:
+                try:
+                    duration = end_date - start_date
+
+                    duration_days = duration.days
+
+                    if duration.seconds > 0 or (duration.days == 0 and duration.total_seconds() > 0):
+                        duration_days += 1
+
+                    if duration_days == 0 and duration.total_seconds() > 0:
+                        duration_days = 1
+
+                    if duration_days <= 0:
+                        errors.append("La duración del alquiler debe ser al menos un día.")
+                    else:
+                        daily_price = decimal.Decimal(str(vehicle.daily_price))
+                        total_price = daily_price * decimal.Decimal(str(duration_days))
+                        response_data['total_price'] = total_price.quantize(decimal.Decimal('0.01'))
+
+                        required_initial_payment_percentage = decimal.Decimal('0.50')
+                        if duration_days > 5:
+                            required_initial_payment_percentage = decimal.Decimal('1.00')
+
+                        required_initial_rental_payment = total_price * required_initial_payment_percentage
+                        response_data['required_initial_rental_payment'] = required_initial_rental_payment.quantize(decimal.Decimal('0.01'))
+
+                        deposit_required = decimal.Decimal('0.00')
+                        if customer_type_normalized == 'extranjero':
+                            deposit_required = decimal.Decimal('100.00')
+                        response_data['deposit_required'] = deposit_required.quantize(decimal.Decimal('0.01'))
+
+                        response_data['total_amount_due_at_start'] = (required_initial_rental_payment + deposit_required).quantize(decimal.Decimal('0.01'))
+                        
+                        # --- ¡AÑADE ESTA LÍNEA! ---
+                        response_data['active_rentals_count'] = active_rentals_count 
+                        # --- FIN DEL CAMBIO ---
+
+                except Exception as calc_error:
+                    errors.append(f"Error durante el cálculo del precio: {str(calc_error)}")
+
         if errors:
             return JsonResponse({"detail": errors}, status=HTTPStatus.BAD_REQUEST)
         else:
