@@ -9,6 +9,7 @@ from brand.models import Brand
 from .serializers import VehicleModelSerializer
 from .forms import VehicleModelForm
 from utilities.decorators import authenticate_user
+from error_log import utils as error_log_utils
 
 import json
 
@@ -23,7 +24,8 @@ class VehicleModelRC(APIView):
             return JsonResponse({
                 "data": serializer.data
             }, status=HTTPStatus.OK)
-        except Exception:
+        except Exception as e:
+            error_log_utils.log_error(user=request.user, exception=e)
             return JsonResponse(
                 {"status": "error", "message": "Ocurrió un error al procesar la solicitud."},
                 status=HTTPStatus.INTERNAL_SERVER_ERROR
@@ -43,6 +45,7 @@ class VehicleModelRC(APIView):
                 if not isinstance(data_for_form, dict):
                     raise ValueError("El cuerpo JSON debe ser un objeto.")
             except (json.JSONDecodeError, ValueError) as e:
+                error_log_utils.log_error(user=request.user, exception=e)
                 return JsonResponse(
                     {"status": "error", "message": f"Cuerpo de la solicitud inválido: {str(e)}"},
                     status=HTTPStatus.BAD_REQUEST
@@ -68,7 +71,8 @@ class VehicleModelRC(APIView):
                     "message": "Modelo de vehículo creado exitosamente.",
                     "data": serializer.data
                 }, status=HTTPStatus.CREATED)
-            except Exception:
+            except Exception as e:
+                error_log_utils.log_error(user=request.user, exception=e)
                 return JsonResponse({
                     "status": "error",
                     "message": "Error interno al guardar el modelo de vehículo."
@@ -134,6 +138,7 @@ class VehicleModelRU(APIView):
                 if not isinstance(payload_data, dict):
                     raise ValueError("El cuerpo JSON debe ser un objeto.")
             except (json.JSONDecodeError, ValueError) as e:
+                error_log_utils.log_error(user=request.user, exception=e)
                 return JsonResponse(
                     {"status": "error", "message": f"Se esperaba un cuerpo JSON con los datos a actualizar: {str(e)}"},
                     status=HTTPStatus.BAD_REQUEST
@@ -162,7 +167,8 @@ class VehicleModelRU(APIView):
                         "status": "success",
                         "message": "Modelo de vehículo actualizado exitosamente.",
                     }, status=HTTPStatus.OK)
-                except Exception:
+                except Exception as e:
+                    error_log_utils.log_error(user=request.user, exception=e)
                     return JsonResponse({
                         "status": "error",
                         "message": "Error interno al guardar la actualización del modelo."
@@ -229,6 +235,7 @@ class VehicleModelD(APIView):
                 "message": "Modelo de vehículo desactivado exitosamente."
             }, status=HTTPStatus.OK)
         except Exception as e:
+            error_log_utils.log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": f"Error inesperado al desactivar el modelo de vehículo: {str(e)}"

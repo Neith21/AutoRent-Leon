@@ -5,6 +5,8 @@ import sys
 from .models import ErrorLog
 
 def log_error(user=None, exception=None):
+
+    print(f"hola")
     # Si el usuario es anónimo, lo dejamos como None
     if user and not user.is_authenticated:
         user = None

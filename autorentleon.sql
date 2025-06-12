@@ -478,16 +478,15 @@ INSERT INTO invoice (rental_id, invoice_number, issue_date, total_amount, refere
 -- ==================================================
 
 INSERT INTO rental (id, customer_id, vehicle_id, pickup_branch_id, return_branch_id, start_date, end_date, actual_return_date, status, total_price, fuel_level_pickup, fuel_level_return, remarks, active, created_by, created_at, modified_by, updated_at) VALUES 
-(4, 2, 1, 1, 1, '2025-06-08 10:00:00', '2025-06-12 10:00:00', NULL, 'Activo', 220.00, 'Lleno', NULL, 'Anticipo del 50% recibido. Vehículo entregado sin detalles.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+(4, 2, 1, 1, 1, '2025-06-09 10:00:00', '2025-06-13 10:00:00', NULL, 'Activo', 220.00, 'Lleno', NULL, 'Anticipo del 50% recibido. Vehículo entregado sin detalles.', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 -- Pago de anticipo para el alquiler 1
 INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
-(4, 110.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Anticipo', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+(4, 110.00, 'Tarjeta de Credito', '2025-06-09 10:05:00', 'Anticipo', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 INSERT INTO payment (rental_id, amount, payment_type, payment_date, concept, reference, active, created_by, created_at, modified_by, updated_at) VALUES
-(4, 100.00, 'Tarjeta de Credito', '2025-06-08 10:05:00', 'Depósito', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
+(4, 100.00, 'Tarjeta de Credito', '2025-06-09 10:05:00', 'Depósito', '', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP);
 
 
 INSERT INTO company (trade_name, nrc, classification, phone, address, logo, email, website, active, created_by, created_at, modified_by, updated_at, logo_lqip, logo_public_id) VALUES
 ('AutoRent León', '123426-7', 'Mediana', '+50322554433', 'Calle La Mascota, #550, San Vicente', 'https://res.cloudinary.com/dmu3idwnm/image/upload/v1749607522/company_logos/ksudrewxhxbubdtvxbne.jpg', 'contacto1@autorentleon.com', 'https://www.autorentleon.com', TRUE, '1', CURRENT_TIMESTAMP, '1', CURRENT_TIMESTAMP, 'https://res.cloudinary.com/dmu3idwnm/image/upload/w_200/e_blur:100/q_auto:low/v1749607522/company_logos/ksudrewxhxbubdtvxbne.jpg', 'company_logos/ksudrewxhxbubdtvxbne');
-

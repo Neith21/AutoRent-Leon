@@ -19,7 +19,7 @@ from django.db import transaction
 from django.core.files.uploadedfile import UploadedFile
 from django.core.exceptions import ValidationError
 import json # Para parsear JSON body
-
+from error_log import utils as error_log_utils
 
 def get_base_url():
     base_url = os.getenv("BASE_URL", "http://127.0.0.1:8000")
@@ -39,6 +39,7 @@ class VehicleRC(APIView):
                 "data": serializer.data
             }, status=HTTPStatus.OK)
         except Exception as e:
+            error_log_utils.log_error(user=request.user, exception=e)
             return JsonResponse(
                 {"status": "error", "message": f"Ocurrió un error al procesar la solicitud. {e}"},
                 status=HTTPStatus.INTERNAL_SERVER_ERROR
@@ -63,6 +64,7 @@ class VehicleRC(APIView):
                 else:
                     raise ValueError("El cuerpo JSON debe ser un objeto.")
             except (json.JSONDecodeError, ValueError) as e:
+                error_log_utils.log_error(user=request.user, exception=e)
                 return JsonResponse({"status": "error", "message": f"Cuerpo de la solicitud inválido: {e}"}, status=HTTPStatus.BAD_REQUEST)
 
         if "vehiclemodel_id" in data_for_form:
@@ -123,6 +125,7 @@ class VehicleRC(APIView):
                 )
             
             except Exception as e_save:
+                error_log_utils.log_error(user=request.user, exception=e_save)
                 return JsonResponse(
                     {"estado": "error", "mensaje": f"Error interno al procesar la creación del vehículo: {str(e_save)}"},
                     status=HTTPStatus.INTERNAL_SERVER_ERROR
@@ -207,16 +210,19 @@ class VehicleRU(APIView):
             }, status=HTTPStatus.OK)
 
         except Vehicle.DoesNotExist:
+            error_log_utils.log_error(user=request.user, exception=Exception("Vehicle not found"))
             return JsonResponse({
                 "status": "error",
                 "message": "Vehículo no encontrado"
             }, status=HTTPStatus.NOT_FOUND)
         except AttributeError as e:
+            error_log_utils.log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": f"Error al acceder a datos relacionados del vehículo: {e}"
             }, status=HTTPStatus.INTERNAL_SERVER_ERROR)
         except Exception as e:
+            error_log_utils.log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": f"Error inesperado procesando la solicitud: {e}"
@@ -231,6 +237,7 @@ class VehicleRU(APIView):
         try:
             vehicle = Vehicle.objects.get(pk=id)
         except Vehicle.DoesNotExist:
+            error_log_utils.log_error(user=request.user, exception=Exception("Vehicle not found"))
             return JsonResponse(
                 {"estado": "error", "mensaje": "Vehículo no encontrado."},
                 status=HTTPStatus.NOT_FOUND
@@ -243,6 +250,7 @@ class VehicleRU(APIView):
                 if not isinstance(payload_data, dict):
                     raise ValueError()
             except (json.JSONDecodeError, ValueError):
+                error_log_utils.log_error(user=request.user, exception=Exception("Invalid JSON body"))
                 return JsonResponse({"estado": "error", "mensaje": "Se esperaba un cuerpo JSON con los datos a actualizar."}, status=HTTPStatus.BAD_REQUEST)
         else:
             payload_data = request.data
@@ -276,6 +284,7 @@ class VehicleRU(APIView):
                 try:
                     cleaned_value = int(value)
                 except (ValueError, TypeError):
+                    error_log_utils.log_error(user=request.user, exception=Exception(f"Invalid value for {field_name}"))
                     return JsonResponse(
                         {"estado": "error", "mensaje": f"Valor inválido para '{field_name}'. Se esperaba un número.",
                          "detalles": {field_name: [{"message": "Debe ser un número entero.", "code": "invalid_type"}]}},
@@ -284,6 +293,7 @@ class VehicleRU(APIView):
                 try:
                     cleaned_value = Decimal(value)
                 except (InvalidOperation, TypeError):
+                    error_log_utils.log_error(user=request.user, exception=Exception(f"Invalid value for {field_name}"))
                     return JsonResponse(
                         {"estado": "error", "mensaje": f"Valor inválido para '{field_name}'. Se esperaba un número decimal.",
                          "detalles": {field_name: [{"message": "Debe ser un número decimal válido.", "code": "invalid_type"}]}},
@@ -306,6 +316,7 @@ class VehicleRU(APIView):
         try:
             vehicle.full_clean(exclude=['active', 'created_by', 'created_at', 'modified_by', 'updated_at'])
         except ValidationError as e:
+            error_log_utils.log_error(user=request.user, exception=e)
             return JsonResponse(
                 {"estado": "error", "mensaje": "Datos inválidos. Por favor, corrija los errores.",
                  "detalles": e.message_dict},
@@ -319,6 +330,7 @@ class VehicleRU(APIView):
                 status=HTTPStatus.OK
             )
         except Exception as e_save:
+            error_log_utils.log_error(user=request.user, exception=e_save)
             return JsonResponse(
                 {"estado": "error", "mensaje": f"Error interno al guardar la actualización del vehículo: {str(e_save)}"},
                 status=HTTPStatus.INTERNAL_SERVER_ERROR
@@ -333,6 +345,7 @@ class VehicleD(APIView):
         try:
             vehicle = Vehicle.objects.get(pk=id)
         except Vehicle.DoesNotExist:
+            error_log_utils.log_error(user=request.user, exception=Exception("Vehicle not found"))
             return JsonResponse({
                 "status": "error",
                 "message": "Vehículo no encontrado"
@@ -351,6 +364,7 @@ class VehicleD(APIView):
             }, status=HTTPStatus.OK)
             
         except Exception as e:
+            error_log_utils.log_error(user=request.user, exception=e)
             return JsonResponse({
                 "status": "error",
                 "message": f"Error inesperado: {str(e)}"
